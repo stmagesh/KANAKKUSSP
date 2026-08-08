@@ -18,12 +18,16 @@ const firebaseConfig = {
 // Whatever name they tap on the login screen is how their
 // entries get tagged. Add or remove names freely.
 // ============================================================
-const PEOPLE = ["Swami", "Senthil", "Periyasamy 3", "Person 4", "Person 5"];
+const PEOPLE = ["Swami", "Senthil", "Periyasamy", "Person 4", "Person 5"];
 
 // A single shared PIN everyone uses to open the app.
 // Change this to something only your team knows.
-const SHARED_PIN = "1234";
 
+const PEOPLE_PINS = {
+  "Swami": "4345",
+  "Senthil": "3176",
+  "Periyasamy": "8327"
+};
 // ============================================================
 // STEP 3 (optional): customize expense categories.
 // ============================================================

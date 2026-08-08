@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Kanakku — Expense Ledger</title>
 <link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#1B2A4A">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@400;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
@@ -181,10 +183,10 @@
     <p class="hint">கணக்கு — the shared expense ledger. Pick your name to continue.</p>
     <label for="person-select">Your name</label>
     <select id="person-select"></select>
-    <label for="pin-input">Shared PIN</label>
-    <input id="pin-input" type="password" inputmode="numeric" placeholder="Enter PIN">
+    <label for="pin-input">Your PIN</label>
+    <input id="pin-input" type="password" inputmode="numeric" placeholder="Enter your PIN">
     <button class="btn-primary" onclick="doLogin()">Open Ledger</button>
-    <div id="login-error">Incorrect PIN. Try again.</div>
+    <div id="login-error">Incorrect PIN for this name. Try again.</div>
   </div>
 </div>
 
@@ -213,7 +215,13 @@
         <input type="number" class="amount-field" id="f-amount" placeholder="0.00" min="0" step="0.01">
         <label>Note (optional)</label>
         <input type="text" id="f-note" placeholder="e.g. cement bags, auto fare">
-        <button class="btn-primary" onclick="submitExpense()">Save Entry</button>
+        <div id="receipt-wrap" style="display:none;">
+          <label>Receipt / bill photo <span id="receipt-required" style="color:var(--red);">(required over ₹500)</span></label>
+          <input type="file" id="f-receipt" accept="image/*,.pdf" capture="environment">
+          <div id="receipt-preview" style="font-size:0.78rem; color:var(--ink-soft); margin:-8px 0 14px;"></div>
+        </div>
+        <div id="upload-progress" style="display:none; font-size:0.8rem; color:var(--ink-soft); margin-bottom:10px;">Uploading receipt…</div>
+        <button class="btn-primary" id="save-btn" onclick="submitExpense()">Save Entry</button>
       </div>
     </div>
 
@@ -265,11 +273,14 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script>
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const storage = firebase.storage();
 const expensesRef = db.collection("expenses");
+const RECEIPT_THRESHOLD = (typeof RECEIPT_REQUIRED_ABOVE !== "undefined") ? RECEIPT_REQUIRED_ABOVE : 500;
 
 let currentPerson = localStorage.getItem("kanakku_person") || null;
 let allExpenses = []; // live cache from Firestore
@@ -278,15 +289,16 @@ let currentPeriod = "daily";
 // ---------- LOGIN ----------
 function populateLogin(){
   const sel = document.getElementById("person-select");
-  sel.innerHTML = PEOPLE.map(p => `<option value="${p}">${p}</option>`).join("");
+  sel.innerHTML = Object.keys(PEOPLE_PINS).map(p => `<option value="${p}">${p}</option>`).join("");
 }
 function doLogin(){
   const person = document.getElementById("person-select").value;
   const pin = document.getElementById("pin-input").value;
-  if(pin !== SHARED_PIN){
+  if(pin !== PEOPLE_PINS[person]){
     document.getElementById("login-error").style.display = "block";
     return;
   }
+  document.getElementById("login-error").style.display = "none";
   currentPerson = person;
   localStorage.setItem("kanakku_person", person);
   enterApp();
@@ -321,24 +333,74 @@ function todayISO(){
   const d = new Date();
   return d.toISOString().slice(0,10);
 }
+function toggleReceiptField(){
+  const amount = parseFloat(document.getElementById("f-amount").value) || 0;
+  const wrap = document.getElementById("receipt-wrap");
+  wrap.style.display = amount > 0 ? "block" : "none";
+  document.getElementById("receipt-required").style.display = amount > RECEIPT_THRESHOLD ? "inline" : "none";
+}
+document.getElementById("f-amount").addEventListener("input", toggleReceiptField);
+document.getElementById("f-receipt").addEventListener("change", (e) => {
+  const f = e.target.files[0];
+  document.getElementById("receipt-preview").textContent = f ? `Selected: ${f.name}` : "";
+});
+
 function submitExpense(){
   const date = document.getElementById("f-date").value;
   const category = document.getElementById("f-category").value;
   const amount = parseFloat(document.getElementById("f-amount").value);
   const note = document.getElementById("f-note").value.trim();
+  const fileInput = document.getElementById("f-receipt");
+  const file = fileInput.files[0];
+
   if(!date || !amount || amount <= 0){
     alert("Please enter a valid date and amount.");
     return;
   }
-  expensesRef.add({
-    date, category, amount, note,
-    person: currentPerson,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(() => {
-    document.getElementById("f-amount").value = "";
-    document.getElementById("f-note").value = "";
-    document.getElementById("f-date").value = todayISO();
-  }).catch(err => alert("Could not save: " + err.message));
+  if(amount > RECEIPT_THRESHOLD && !file){
+    alert(`A receipt photo is required for expenses over ₹${RECEIPT_THRESHOLD}.`);
+    return;
+  }
+
+  const saveBtn = document.getElementById("save-btn");
+  saveBtn.disabled = true;
+
+  function saveDoc(receiptUrl){
+    expensesRef.add({
+      date, category, amount, note,
+      person: currentPerson,
+      receiptUrl: receiptUrl || null,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      document.getElementById("f-amount").value = "";
+      document.getElementById("f-note").value = "";
+      document.getElementById("f-date").value = todayISO();
+      fileInput.value = "";
+      document.getElementById("receipt-preview").textContent = "";
+      document.getElementById("receipt-wrap").style.display = "none";
+      document.getElementById("upload-progress").style.display = "none";
+      saveBtn.disabled = false;
+    }).catch(err => {
+      alert("Could not save: " + err.message);
+      document.getElementById("upload-progress").style.display = "none";
+      saveBtn.disabled = false;
+    });
+  }
+
+  if(file){
+    document.getElementById("upload-progress").style.display = "block";
+    const path = `receipts/${Date.now()}_${currentPerson}_${file.name}`;
+    const ref = storage.ref().child(path);
+    ref.put(file).then(snap => snap.ref.getDownloadURL()).then(url => {
+      saveDoc(url);
+    }).catch(err => {
+      alert("Receipt upload failed: " + err.message);
+      document.getElementById("upload-progress").style.display = "none";
+      saveBtn.disabled = false;
+    });
+  } else {
+    saveDoc(null);
+  }
 }
 
 // ---------- LIVE SYNC ----------
@@ -365,6 +427,7 @@ function renderEntries(){
       <div>
         <div class="cat">${escapeHtml(e.category)}</div>
         <div class="meta">${e.date} · ${escapeHtml(e.person)}${e.note ? " · " + escapeHtml(e.note) : ""}</div>
+        ${e.receiptUrl ? `<a href="${e.receiptUrl}" target="_blank" rel="noopener" style="font-size:0.75rem; color:var(--green); text-decoration:underline;">📎 View receipt</a>` : ""}
       </div>
       <div style="text-align:right;">
         <div class="amt">₹${Number(e.amount).toFixed(2)}</div>

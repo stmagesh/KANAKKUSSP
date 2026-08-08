@@ -28,13 +28,33 @@ needed). Reports: Daily, Fortnightly, Monthly, Yearly, with CSV export.
    ```
    Click **Publish**.
 
+### 1b. Enable Firebase Storage (for receipt photos)
+1. In the left sidebar, use the search icon → type **Storage** → click **Storage**.
+2. Click **Get started**.
+3. Choose **Start in production mode** → Next → pick the same location as your
+   Firestore database → **Done**.
+4. Go to the **Rules** tab of Storage and paste:
+   ```
+   rules_version = '2';
+   service firebase.storage {
+     match /b/{bucket}/o {
+       match /receipts/{allPaths=**} {
+         allow read, write: if true;
+       }
+     }
+   }
+   ```
+   Click **Publish**.
+   (Same trusted-small-team model as the Firestore rules — the app's PIN is the gate.)
+
 ### 2. Register a web app
 1. In Project Settings (gear icon, top left) → **Your apps** → click the **</>** (Web) icon.
 2. Give it a nickname → Register app. It shows a `firebaseConfig` object.
 3. Copy those values into `firebase-config.js` in this folder, replacing the
    `PASTE_...` placeholders.
-4. In the same file, edit `PEOPLE` to your team's actual names, and change
-   `SHARED_PIN` to something private.
+4. In the same file, edit `PEOPLE_PINS` — replace each `"Person 1"` etc. with
+   your team's real names, and give each person their own PIN (so nobody can
+   accidentally log an entry under someone else's name).
 
 ### 3. Put it online
 Any static hosting works. Two easy free options:
@@ -48,18 +68,23 @@ firebase deploy
 ```
 You'll get a URL like `https://kanakku-ledger.web.app`.
 
-**Option B — GitHub Pages:** push this folder to a GitHub repo, then enable
-Pages in the repo settings. You'll get a URL like
-`https://yourname.github.io/kanakku`.
+**Option B — GitHub Pages:** push this folder to a GitHub repo (drag in **all
+files, including `icon-192.png` and `icon-512.png`** — missing icons is why
+the app logo won't show), then enable Pages in the repo settings. You'll get
+a URL like `https://yourname.github.io/kanakku`.
 
 ### 4. Install on Android
 1. Open the deployed URL in Chrome on each phone.
-2. Log in once with name + PIN.
+2. Log in once with your name + your own PIN.
 3. Tap the Chrome menu (⋮) → **Add to Home screen** / **Install app**.
 4. It now opens full-screen with its own icon, like a native app.
 
 ## Using it
-- **Add** tab — log an expense (date, category, amount, note).
+- **Add** tab — log an expense (date, category, amount, note). Once the amount
+  goes above ₹500 (editable via `RECEIPT_REQUIRED_ABOVE` in
+  `firebase-config.js`), a receipt upload field appears and becomes required —
+  it accepts a photo (camera opens directly on phones) or a PDF.
+- Entries with a receipt show a **📎 View receipt** link that opens the image/PDF.
 - **Entries** tab — live list of everyone's entries, newest first; delete your own.
 - **Reports** tab — pick Daily / Fortnightly / Monthly / Yearly and an anchor
   date; see the total plus breakdowns by category and by person; export the
@@ -70,6 +95,6 @@ Pages in the repo settings. You'll get a URL like
 - Categories are editable in `firebase-config.js` under `CATEGORIES`.
 - Everything is timestamped by calendar date, not device time zone, so entries
   from different locations line up correctly.
-- If you outgrow the shared-PIN model (want individual logins, admin-only
-  deletion, etc.), the next step is Firebase Authentication — happy to extend
-  this when you're ready.
+- If you outgrow this PIN model (want to fully prevent PIN-sharing, add an
+  admin-only deletion role, etc.), the next step is Firebase Authentication —
+  happy to extend this when you're ready.
