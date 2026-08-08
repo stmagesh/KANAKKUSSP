@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Kanakku — Expense Ledger</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B2A4A">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@400;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --paper:#FAF6EC;
+    --paper-line:#E3D9C2;
+    --ink:#1B2A4A;
+    --ink-soft:#5B6478;
+    --red:#B33A3A;
+    --green:#2F6F4E;
+    --brass:#C9A227;
+    --card:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background:
+      repeating-linear-gradient(var(--paper) 0px, var(--paper) 31px, var(--paper-line) 32px),
+      var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:70px;
+  }
+  .brass-rule{
+    height:6px;
+    background:linear-gradient(90deg, var(--brass), #E8CE6B 40%, var(--brass));
+  }
+  header{
+    background:var(--ink);
+    color:var(--paper);
+    padding:18px 20px 14px;
+    position:sticky; top:0; z-index:10;
+  }
+  header h1{
+    font-family:'Zilla Slab',serif;
+    font-size:1.5rem;
+    margin:0;
+    letter-spacing:0.5px;
+  }
+  header .sub{
+    font-size:0.78rem;
+    color:#B9C2D8;
+    margin-top:2px;
+  }
+  #whoami{
+    position:absolute; right:20px; top:20px;
+    font-size:0.75rem; color:#B9C2D8; text-align:right;
+  }
+  #whoami button{
+    background:none; border:1px solid #B9C2D8; color:#B9C2D8;
+    font-size:0.7rem; padding:3px 8px; border-radius:3px; margin-top:4px; cursor:pointer;
+  }
+
+  main{ max-width:640px; margin:0 auto; padding:18px 16px 30px; }
+
+  .screen{ display:none; }
+  .screen.active{ display:block; }
+
+  /* --- LOGIN --- */
+  #login-screen{
+    max-width:400px; margin:60px auto; padding:0 16px;
+  }
+  .login-card{
+    background:var(--card);
+    border:1px solid var(--paper-line);
+    border-left:6px solid var(--brass);
+    border-radius:6px;
+    padding:28px 24px;
+    box-shadow:0 2px 10px rgba(27,42,74,0.08);
+  }
+  .login-card h2{
+    font-family:'Zilla Slab',serif;
+    margin:0 0 4px;
+  }
+  .login-card p.hint{ color:var(--ink-soft); font-size:0.85rem; margin-top:0; margin-bottom:20px;}
+  label{ font-size:0.8rem; font-weight:600; color:var(--ink-soft); display:block; margin-bottom:6px; }
+  select, input, button, textarea{
+    font-family:inherit; font-size:1rem;
+  }
+  select#person-select, input#pin-input{
+    width:100%; padding:11px 12px; border:1px solid var(--paper-line);
+    border-radius:5px; margin-bottom:16px; background:var(--paper);
+    color:var(--ink);
+  }
+  .btn-primary{
+    width:100%; padding:13px; background:var(--ink); color:var(--paper);
+    border:none; border-radius:5px; font-weight:600; cursor:pointer; font-size:1rem;
+    letter-spacing:0.3px;
+  }
+  .btn-primary:active{ opacity:0.85; }
+  #login-error{ color:var(--red); font-size:0.85rem; margin-top:10px; display:none; }
+
+  /* --- TABS --- */
+  .tabbar{
+    position:fixed; bottom:0; left:0; right:0;
+    background:var(--card);
+    border-top:1px solid var(--paper-line);
+    display:flex; z-index:10;
+  }
+  .tabbar button{
+    flex:1; padding:12px 4px 10px; background:none; border:none;
+    font-family:'Inter',sans-serif; font-size:0.72rem; color:var(--ink-soft);
+    cursor:pointer; font-weight:600;
+  }
+  .tabbar button .ic{ display:block; font-size:1.15rem; margin-bottom:2px; }
+  .tabbar button.active{ color:var(--ink); }
+  .tabbar button.active .ic{ color:var(--brass); }
+
+  /* --- CARD --- */
+  .card{
+    background:var(--card); border:1px solid var(--paper-line); border-radius:6px;
+    padding:18px; margin-bottom:16px; box-shadow:0 1px 4px rgba(27,42,74,0.05);
+  }
+  .card h3{ font-family:'Zilla Slab',serif; margin:0 0 14px; font-size:1.15rem; }
+
+  input[type=date], input[type=number], input[type=text], select.field{
+    width:100%; padding:11px 12px; border:1px solid var(--paper-line);
+    border-radius:5px; margin-bottom:14px; background:var(--paper); color:var(--ink);
+  }
+  .amount-field{ font-family:'IBM Plex Mono',monospace; font-weight:600; }
+  .row2{ display:flex; gap:10px; }
+  .row2 > div{ flex:1; }
+
+  /* --- ENTRIES LIST --- */
+  .entry{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 0; border-bottom:1px dashed var(--paper-line);
+  }
+  .entry:last-child{ border-bottom:none; }
+  .entry .meta{ font-size:0.78rem; color:var(--ink-soft); }
+  .entry .cat{ font-weight:600; font-size:0.92rem; }
+  .entry .amt{ font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--red); font-size:1rem; }
+  .entry .del{ background:none; border:none; color:var(--ink-soft); font-size:0.7rem; cursor:pointer; margin-left:10px; text-decoration:underline; }
+  .empty-note{ color:var(--ink-soft); font-size:0.88rem; text-align:center; padding:20px 0; }
+
+  /* --- REPORTS --- */
+  .period-toggle{ display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+  .period-toggle button{
+    flex:1; min-width:70px; padding:9px 4px; border:1px solid var(--paper-line);
+    background:var(--paper); border-radius:5px; font-size:0.78rem; font-weight:600;
+    color:var(--ink-soft); cursor:pointer;
+  }
+  .period-toggle button.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+
+  .total-banner{
+    background:var(--ink); color:var(--paper); border-radius:6px; padding:18px;
+    text-align:center; margin-bottom:16px;
+  }
+  .total-banner .label{ font-size:0.75rem; color:#B9C2D8; text-transform:uppercase; letter-spacing:1px; }
+  .total-banner .value{ font-family:'IBM Plex Mono',monospace; font-size:1.9rem; font-weight:600; margin-top:4px; }
+
+  table.breakdown{ width:100%; border-collapse:collapse; font-size:0.88rem; }
+  table.breakdown th{ text-align:left; color:var(--ink-soft); font-weight:600; font-size:0.72rem;
+    text-transform:uppercase; letter-spacing:0.5px; padding-bottom:8px; border-bottom:1px solid var(--paper-line); }
+  table.breakdown td{ padding:8px 0; border-bottom:1px dashed var(--paper-line); }
+  table.breakdown td.num{ font-family:'IBM Plex Mono',monospace; text-align:right; }
+
+  .export-btn{
+    width:100%; padding:11px; background:var(--paper); border:1px solid var(--ink);
+    color:var(--ink); border-radius:5px; font-weight:600; cursor:pointer; margin-top:6px;
+  }
+
+  h4.section-label{ font-family:'Zilla Slab',serif; font-size:0.98rem; margin:18px 0 8px; }
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="login-screen">
+  <div class="login-card">
+    <h2>Kanakku</h2>
+    <p class="hint">கணக்கு — the shared expense ledger. Pick your name to continue.</p>
+    <label for="person-select">Your name</label>
+    <select id="person-select"></select>
+    <label for="pin-input">Shared PIN</label>
+    <input id="pin-input" type="password" inputmode="numeric" placeholder="Enter PIN">
+    <button class="btn-primary" onclick="doLogin()">Open Ledger</button>
+    <div id="login-error">Incorrect PIN. Try again.</div>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app-screen" style="display:none;">
+  <header>
+    <h1>Kanakku</h1>
+    <div class="sub">Shared expense ledger</div>
+    <div id="whoami">
+      <div id="whoami-name"></div>
+      <button onclick="doLogout()">Switch user</button>
+    </div>
+  </header>
+  <div class="brass-rule"></div>
+
+  <main>
+    <!-- ADD EXPENSE -->
+    <div class="screen active" id="screen-add">
+      <div class="card">
+        <h3>New Entry</h3>
+        <label>Date</label>
+        <input type="date" id="f-date">
+        <label>Category</label>
+        <select class="field" id="f-category"></select>
+        <label>Amount (₹)</label>
+        <input type="number" class="amount-field" id="f-amount" placeholder="0.00" min="0" step="0.01">
+        <label>Note (optional)</label>
+        <input type="text" id="f-note" placeholder="e.g. cement bags, auto fare">
+        <button class="btn-primary" onclick="submitExpense()">Save Entry</button>
+      </div>
+    </div>
+
+    <!-- ENTRIES -->
+    <div class="screen" id="screen-entries">
+      <div class="card">
+        <h3>Recent Entries</h3>
+        <div id="entries-list"><div class="empty-note">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="screen" id="screen-reports">
+      <div class="card">
+        <h3>Reports</h3>
+        <div class="period-toggle" id="period-toggle">
+          <button data-period="daily" class="active">Daily</button>
+          <button data-period="fortnightly">Fortnight</button>
+          <button data-period="monthly">Monthly</button>
+          <button data-period="yearly">Yearly</button>
+        </div>
+        <label>Anchor date</label>
+        <input type="date" id="report-date">
+        <div class="total-banner">
+          <div class="label" id="report-range-label">Today</div>
+          <div class="value" id="report-total">₹0</div>
+        </div>
+        <h4 class="section-label">By category</h4>
+        <table class="breakdown" id="cat-breakdown"><thead><tr><th>Category</th><th class="num">Amount</th></tr></thead><tbody></tbody></table>
+        <h4 class="section-label">By person</h4>
+        <table class="breakdown" id="person-breakdown"><thead><tr><th>Person</th><th class="num">Amount</th></tr></thead><tbody></tbody></table>
+        <button class="export-btn" onclick="exportCSV()">Export this period as CSV</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="tabbar">
+    <button class="tab-btn active" data-screen="screen-add" onclick="switchTab('screen-add', this)">
+      <span class="ic">＋</span>Add
+    </button>
+    <button class="tab-btn" data-screen="screen-entries" onclick="switchTab('screen-entries', this)">
+      <span class="ic">☰</span>Entries
+    </button>
+    <button class="tab-btn" data-screen="screen-reports" onclick="switchTab('screen-reports', this)">
+      <span class="ic">▤</span>Reports
+    </button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const expensesRef = db.collection("expenses");
+
+let currentPerson = localStorage.getItem("kanakku_person") || null;
+let allExpenses = []; // live cache from Firestore
+let currentPeriod = "daily";
+
+// ---------- LOGIN ----------
+function populateLogin(){
+  const sel = document.getElementById("person-select");
+  sel.innerHTML = PEOPLE.map(p => `<option value="${p}">${p}</option>`).join("");
+}
+function doLogin(){
+  const person = document.getElementById("person-select").value;
+  const pin = document.getElementById("pin-input").value;
+  if(pin !== SHARED_PIN){
+    document.getElementById("login-error").style.display = "block";
+    return;
+  }
+  currentPerson = person;
+  localStorage.setItem("kanakku_person", person);
+  enterApp();
+}
+function doLogout(){
+  localStorage.removeItem("kanakku_person");
+  currentPerson = null;
+  document.getElementById("app-screen").style.display = "none";
+  document.getElementById("login-screen").style.display = "block";
+}
+function enterApp(){
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("app-screen").style.display = "block";
+  document.getElementById("whoami-name").textContent = currentPerson;
+}
+
+// ---------- TABS ----------
+function switchTab(screenId, btn){
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(screenId).classList.add("active");
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  if(screenId === "screen-reports") renderReport();
+}
+
+// ---------- ADD EXPENSE ----------
+function populateForm(){
+  document.getElementById("f-date").value = todayISO();
+  document.getElementById("f-category").innerHTML = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join("");
+}
+function todayISO(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+function submitExpense(){
+  const date = document.getElementById("f-date").value;
+  const category = document.getElementById("f-category").value;
+  const amount = parseFloat(document.getElementById("f-amount").value);
+  const note = document.getElementById("f-note").value.trim();
+  if(!date || !amount || amount <= 0){
+    alert("Please enter a valid date and amount.");
+    return;
+  }
+  expensesRef.add({
+    date, category, amount, note,
+    person: currentPerson,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    document.getElementById("f-amount").value = "";
+    document.getElementById("f-note").value = "";
+    document.getElementById("f-date").value = todayISO();
+  }).catch(err => alert("Could not save: " + err.message));
+}
+
+// ---------- LIVE SYNC ----------
+function startSync(){
+  expensesRef.orderBy("date", "desc").onSnapshot(snap => {
+    allExpenses = [];
+    snap.forEach(doc => allExpenses.push({ id: doc.id, ...doc.data() }));
+    renderEntries();
+    if(document.getElementById("screen-reports").classList.contains("active")) renderReport();
+  }, err => {
+    document.getElementById("entries-list").innerHTML =
+      `<div class="empty-note">Sync error: ${err.message}</div>`;
+  });
+}
+
+function renderEntries(){
+  const list = document.getElementById("entries-list");
+  if(allExpenses.length === 0){
+    list.innerHTML = `<div class="empty-note">No entries yet. Add your first expense.</div>`;
+    return;
+  }
+  list.innerHTML = allExpenses.slice(0, 60).map(e => `
+    <div class="entry">
+      <div>
+        <div class="cat">${escapeHtml(e.category)}</div>
+        <div class="meta">${e.date} · ${escapeHtml(e.person)}${e.note ? " · " + escapeHtml(e.note) : ""}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="amt">₹${Number(e.amount).toFixed(2)}</div>
+        <button class="del" onclick="deleteEntry('${e.id}')">delete</button>
+      </div>
+    </div>
+  `).join("");
+}
+function deleteEntry(id){
+  if(confirm("Delete this entry?")) expensesRef.doc(id).delete();
+}
+function escapeHtml(s){
+  return (s || "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// ---------- REPORTS ----------
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("report-date").value = todayISO();
+  document.querySelectorAll("#period-toggle button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#period-toggle button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentPeriod = btn.dataset.period;
+      renderReport();
+    });
+  });
+  document.getElementById("report-date").addEventListener("change", renderReport);
+});
+
+function getRange(period, anchorISO){
+  const anchor = new Date(anchorISO + "T00:00:00");
+  let start, end, label;
+  if(period === "daily"){
+    start = new Date(anchor); end = new Date(anchor);
+    label = anchor.toDateString();
+  } else if(period === "fortnightly"){
+    // fortnight = the 1-15 or 16-end block containing the anchor date
+    const day = anchor.getDate();
+    if(day <= 15){
+      start = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+      end = new Date(anchor.getFullYear(), anchor.getMonth(), 15);
+    } else {
+      start = new Date(anchor.getFullYear(), anchor.getMonth(), 16);
+      end = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
+    }
+    label = `${start.toDateString()} – ${end.toDateString()}`;
+  } else if(period === "monthly"){
+    start = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+    end = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
+    label = start.toLocaleString('default', { month: 'long', year: 'numeric' });
+  } else if(period === "yearly"){
+    start = new Date(anchor.getFullYear(), 0, 1);
+    end = new Date(anchor.getFullYear(), 11, 31);
+    label = String(anchor.getFullYear());
+  }
+  return { start, end, label };
+}
+
+function renderReport(){
+  const anchorISO = document.getElementById("report-date").value || todayISO();
+  const { start, end, label } = getRange(currentPeriod, anchorISO);
+  const startStr = isoOf(start), endStr = isoOf(end);
+
+  const filtered = allExpenses.filter(e => e.date >= startStr && e.date <= endStr);
+  const total = filtered.reduce((s,e) => s + Number(e.amount), 0);
+
+  document.getElementById("report-range-label").textContent = label;
+  document.getElementById("report-total").textContent = "₹" + total.toFixed(2);
+
+  renderBreakdown("cat-breakdown", filtered, "category");
+  renderBreakdown("person-breakdown", filtered, "person");
+
+  window._lastReportRows = filtered; // for CSV export
+  window._lastReportLabel = label;
+}
+function isoOf(d){ return d.toISOString().slice(0,10); }
+
+function renderBreakdown(tableId, rows, key){
+  const totals = {};
+  rows.forEach(e => { totals[e[key]] = (totals[e[key]] || 0) + Number(e.amount); });
+  const tbody = document.querySelector(`#${tableId} tbody`);
+  const entries = Object.entries(totals).sort((a,b) => b[1]-a[1]);
+  if(entries.length === 0){
+    tbody.innerHTML = `<tr><td colspan="2" style="color:#5B6478;">No entries in this period</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = entries.map(([k,v]) =>
+    `<tr><td>${escapeHtml(k)}</td><td class="num">₹${v.toFixed(2)}</td></tr>`
+  ).join("");
+}
+
+function exportCSV(){
+  const rows = window._lastReportRows || [];
+  if(rows.length === 0){ alert("No entries to export for this period."); return; }
+  let csv = "Date,Person,Category,Amount,Note\n";
+  rows.forEach(e => {
+    csv += `${e.date},"${(e.person||"").replace(/"/g,'""')}","${(e.category||"").replace(/"/g,'""')}",${e.amount},"${(e.note||"").replace(/"/g,'""')}"\n`;
+  });
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `kanakku-${(window._lastReportLabel||"report").replace(/\s+/g,'-')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ---------- INIT ----------
+populateLogin();
+populateForm();
+if(currentPerson){
+  enterApp();
+}
+startSync();
+
+// register service worker for offline/installable behaviour
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
