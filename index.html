@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Kanakku — Expense Ledger</title>
-<link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json?v=2">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2">
+<link rel="apple-touch-icon" href="icon-192.png?v=2">
 <meta name="theme-color" content="#1B2A4A">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@400;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@400;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap');
 
   :root{
     --paper:#FAF6EC;
@@ -24,7 +24,7 @@
   *{box-sizing:border-box;}
   body{
     margin:0;
-    font-family:'Inter',sans-serif;
+    font-family:'Inter','Noto Sans Tamil',sans-serif;
     background:
       repeating-linear-gradient(var(--paper) 0px, var(--paper) 31px, var(--paper-line) 32px),
       var(--paper);
@@ -54,12 +54,16 @@
     margin-top:2px;
   }
   #whoami{
-    position:absolute; right:20px; top:20px;
+    position:absolute; right:20px; top:16px;
     font-size:0.75rem; color:#B9C2D8; text-align:right;
   }
   #whoami button{
     background:none; border:1px solid #B9C2D8; color:#B9C2D8;
     font-size:0.7rem; padding:3px 8px; border-radius:3px; margin-top:4px; cursor:pointer;
+  }
+  #lang-select{
+    background:var(--ink); border:1px solid #B9C2D8; color:var(--paper);
+    font-size:0.72rem; padding:3px 6px; border-radius:3px; margin-bottom:5px;
   }
 
   main{ max-width:640px; margin:0 auto; padding:18px 16px 30px; }
@@ -99,6 +103,7 @@
     letter-spacing:0.3px;
   }
   .btn-primary:active{ opacity:0.85; }
+  .btn-primary:disabled{ opacity:0.6; cursor:default; }
   #login-error{ color:var(--red); font-size:0.85rem; margin-top:10px; display:none; }
 
   /* --- TABS --- */
@@ -180,13 +185,13 @@
 <div id="login-screen">
   <div class="login-card">
     <h2>Kanakku</h2>
-    <p class="hint">கணக்கு — the shared expense ledger. Pick your name to continue.</p>
-    <label for="person-select">Your name</label>
+    <p class="hint" data-i18n="loginHint">The shared expense ledger. Pick your name to continue.</p>
+    <label for="person-select" data-i18n="yourName">Your name</label>
     <select id="person-select"></select>
-    <label for="pin-input">Your PIN</label>
-    <input id="pin-input" type="password" inputmode="numeric" placeholder="Enter your PIN">
-    <button class="btn-primary" onclick="doLogin()">Open Ledger</button>
-    <div id="login-error">Incorrect PIN for this name. Try again.</div>
+    <label for="pin-input" data-i18n="yourPin">Your PIN</label>
+    <input id="pin-input" type="password" inputmode="numeric" data-i18n-placeholder="enterPin" placeholder="Enter your PIN">
+    <button class="btn-primary" onclick="doLogin()" data-i18n="openLedger">Open Ledger</button>
+    <div id="login-error" data-i18n="wrongPin">Incorrect PIN for this name. Try again.</div>
   </div>
 </div>
 
@@ -194,10 +199,14 @@
 <div id="app-screen" style="display:none;">
   <header>
     <h1>Kanakku</h1>
-    <div class="sub">Shared expense ledger</div>
+    <div class="sub" data-i18n="tagline">Shared expense ledger</div>
     <div id="whoami">
+      <select id="lang-select" onchange="setLanguage(this.value)">
+        <option value="en">English</option>
+        <option value="ta">தமிழ்</option>
+      </select>
       <div id="whoami-name"></div>
-      <button onclick="doLogout()">Switch user</button>
+      <button onclick="doLogout()" data-i18n="switchUser">Switch user</button>
     </div>
   </header>
   <div class="brass-rule"></div>
@@ -206,67 +215,67 @@
     <!-- ADD EXPENSE -->
     <div class="screen active" id="screen-add">
       <div class="card">
-        <h3>New Entry</h3>
-        <label>Date</label>
+        <h3 data-i18n="newEntry">New Entry</h3>
+        <label data-i18n="date">Date</label>
         <input type="date" id="f-date">
-        <label>Category</label>
+        <label data-i18n="category">Category</label>
         <select class="field" id="f-category"></select>
-        <label>Amount (₹)</label>
+        <label data-i18n="amount">Amount (₹)</label>
         <input type="number" class="amount-field" id="f-amount" placeholder="0.00" min="0" step="0.01">
-        <label>Note (optional)</label>
-        <input type="text" id="f-note" placeholder="e.g. cement bags, auto fare">
+        <label data-i18n="note">Note (optional)</label>
+        <input type="text" id="f-note" data-i18n-placeholder="notePlaceholder" placeholder="e.g. cement bags, auto fare">
         <div id="receipt-wrap" style="display:none;">
-          <label>Receipt / bill photo <span id="receipt-required" style="color:var(--red);">(required over ₹500)</span></label>
+          <label><span data-i18n="receiptLabel">Receipt / bill photo</span> <span id="receipt-required" style="color:var(--red);"></span></label>
           <input type="file" id="f-receipt" accept="image/*,.pdf" capture="environment">
           <div id="receipt-preview" style="font-size:0.78rem; color:var(--ink-soft); margin:-8px 0 14px;"></div>
         </div>
-        <div id="upload-progress" style="display:none; font-size:0.8rem; color:var(--ink-soft); margin-bottom:10px;">Uploading receipt…</div>
-        <button class="btn-primary" id="save-btn" onclick="submitExpense()">Save Entry</button>
+        <div id="upload-progress" style="display:none; font-size:0.8rem; color:var(--ink-soft); margin-bottom:10px;"></div>
+        <button class="btn-primary" id="save-btn" onclick="submitExpense()" data-i18n="saveEntry">Save Entry</button>
       </div>
     </div>
 
     <!-- ENTRIES -->
     <div class="screen" id="screen-entries">
       <div class="card">
-        <h3>Recent Entries</h3>
-        <div id="entries-list"><div class="empty-note">Loading…</div></div>
+        <h3 data-i18n="recentEntries">Recent Entries</h3>
+        <div id="entries-list"><div class="empty-note" data-i18n="loading">Loading…</div></div>
       </div>
     </div>
 
     <!-- REPORTS -->
     <div class="screen" id="screen-reports">
       <div class="card">
-        <h3>Reports</h3>
+        <h3 data-i18n="reports">Reports</h3>
         <div class="period-toggle" id="period-toggle">
-          <button data-period="daily" class="active">Daily</button>
-          <button data-period="fortnightly">Fortnight</button>
-          <button data-period="monthly">Monthly</button>
-          <button data-period="yearly">Yearly</button>
+          <button data-period="daily" class="active" data-i18n="periodDaily">Daily</button>
+          <button data-period="fortnightly" data-i18n="periodFortnight">Fortnight</button>
+          <button data-period="monthly" data-i18n="periodMonthly">Monthly</button>
+          <button data-period="yearly" data-i18n="periodYearly">Yearly</button>
         </div>
-        <label>Anchor date</label>
+        <label data-i18n="anchorDate">Anchor date</label>
         <input type="date" id="report-date">
         <div class="total-banner">
-          <div class="label" id="report-range-label">Today</div>
+          <div class="label" id="report-range-label" data-i18n="today">Today</div>
           <div class="value" id="report-total">₹0</div>
         </div>
-        <h4 class="section-label">By category</h4>
-        <table class="breakdown" id="cat-breakdown"><thead><tr><th>Category</th><th class="num">Amount</th></tr></thead><tbody></tbody></table>
-        <h4 class="section-label">By person</h4>
-        <table class="breakdown" id="person-breakdown"><thead><tr><th>Person</th><th class="num">Amount</th></tr></thead><tbody></tbody></table>
-        <button class="export-btn" onclick="exportCSV()">Export this period as CSV</button>
+        <h4 class="section-label" data-i18n="byCategory">By category</h4>
+        <table class="breakdown" id="cat-breakdown"><thead><tr><th data-i18n="colCategory">Category</th><th class="num" data-i18n="colAmount">Amount</th></tr></thead><tbody></tbody></table>
+        <h4 class="section-label" data-i18n="byPerson">By person</h4>
+        <table class="breakdown" id="person-breakdown"><thead><tr><th data-i18n="colPerson">Person</th><th class="num" data-i18n="colAmount">Amount</th></tr></thead><tbody></tbody></table>
+        <button class="export-btn" onclick="exportCSV()" data-i18n="exportCsv">Export this period as CSV</button>
       </div>
     </div>
   </main>
 
   <div class="tabbar">
     <button class="tab-btn active" data-screen="screen-add" onclick="switchTab('screen-add', this)">
-      <span class="ic">＋</span>Add
+      <span class="ic">＋</span><span data-i18n="tabAdd">Add</span>
     </button>
     <button class="tab-btn" data-screen="screen-entries" onclick="switchTab('screen-entries', this)">
-      <span class="ic">☰</span>Entries
+      <span class="ic">☰</span><span data-i18n="tabEntries">Entries</span>
     </button>
     <button class="tab-btn" data-screen="screen-reports" onclick="switchTab('screen-reports', this)">
-      <span class="ic">▤</span>Reports
+      <span class="ic">▤</span><span data-i18n="tabReports">Reports</span>
     </button>
   </div>
 </div>
@@ -281,10 +290,105 @@ const db = firebase.firestore();
 const storage = firebase.storage();
 const expensesRef = db.collection("expenses");
 const RECEIPT_THRESHOLD = (typeof RECEIPT_REQUIRED_ABOVE !== "undefined") ? RECEIPT_REQUIRED_ABOVE : 500;
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB safety cap after compression
 
 let currentPerson = localStorage.getItem("kanakku_person") || null;
 let allExpenses = []; // live cache from Firestore
 let currentPeriod = "daily";
+
+// ---------- TRANSLATIONS ----------
+const TRANSLATIONS = {
+  en: {
+    tagline: "Shared expense ledger",
+    loginHint: "The shared expense ledger. Pick your name to continue.",
+    yourName: "Your name", yourPin: "Your PIN", enterPin: "Enter your PIN",
+    openLedger: "Open Ledger",
+    wrongPin: "Incorrect PIN for this name. Try again.",
+    switchUser: "Switch user",
+    newEntry: "New Entry", date: "Date", category: "Category", amount: "Amount (₹)",
+    note: "Note (optional)", notePlaceholder: "e.g. cement bags, auto fare",
+    receiptLabel: "Receipt / bill photo",
+    receiptRequired: (n) => `(required over ₹${n})`,
+    compressingImage: "Preparing image…",
+    uploadingReceipt: (pct) => `Uploading receipt… ${pct}%`,
+    saveEntry: "Save Entry",
+    recentEntries: "Recent Entries", loading: "Loading…",
+    noEntries: "No entries yet. Add your first expense.",
+    syncError: "Sync error: ",
+    delete: "delete", viewReceipt: "📎 View receipt",
+    reports: "Reports",
+    periodDaily: "Daily", periodFortnight: "Fortnight", periodMonthly: "Monthly", periodYearly: "Yearly",
+    anchorDate: "Anchor date", byCategory: "By category", byPerson: "By person",
+    colCategory: "Category", colPerson: "Person", colAmount: "Amount",
+    noEntriesPeriod: "No entries in this period",
+    exportCsv: "Export this period as CSV",
+    validDateAmount: "Please enter a valid date and amount.",
+    receiptRequiredAlert: (n) => `A receipt photo is required for expenses over ₹${n}.`,
+    fileTooLarge: "That file is too large even after compression. Please choose a smaller photo or PDF.",
+    couldNotSave: "Could not save: ",
+    uploadFailed: "Receipt upload failed: ",
+    noExport: "No entries to export for this period.",
+    confirmDelete: "Delete this entry?",
+    selected: (name) => `Selected: ${name}`,
+    tabAdd: "Add", tabEntries: "Entries", tabReports: "Reports",
+    today: "Today"
+  },
+  ta: {
+    tagline: "பகிரப்பட்ட செலவுக் கணக்கேடு",
+    loginHint: "பகிரப்பட்ட செலவுக் கணக்கேடு. தொடர உங்கள் பெயரைத் தேர்ந்தெடுக்கவும்.",
+    yourName: "உங்கள் பெயர்", yourPin: "உங்கள் பின்", enterPin: "உங்கள் பின்னை உள்ளிடவும்",
+    openLedger: "கணக்கேட்டைத் திற",
+    wrongPin: "இந்தப் பெயருக்கு தவறான பின். மீண்டும் முயற்சிக்கவும்.",
+    switchUser: "பயனரை மாற்று",
+    newEntry: "புதிய பதிவு", date: "தேதி", category: "வகை", amount: "தொகை (₹)",
+    note: "குறிப்பு (விருப்பம்)", notePlaceholder: "எ.கா. சிமெண்ட் மூட்டைகள், ஆட்டோ கட்டணம்",
+    receiptLabel: "ரசீது / பில் புகைப்படம்",
+    receiptRequired: (n) => `(₹${n}க்கு மேல் அவசியம்)`,
+    compressingImage: "படம் தயாராகிறது…",
+    uploadingReceipt: (pct) => `ரசீது பதிவேற்றப்படுகிறது… ${pct}%`,
+    saveEntry: "பதிவைச் சேமி",
+    recentEntries: "சமீபத்திய பதிவுகள்", loading: "ஏற்றுகிறது…",
+    noEntries: "இன்னும் பதிவுகள் இல்லை. உங்கள் முதல் செலவைச் சேர்க்கவும்.",
+    syncError: "இணைப்புப் பிழை: ",
+    delete: "நீக்கு", viewReceipt: "📎 ரசீதைப் பார்க்க",
+    reports: "அறிக்கைகள்",
+    periodDaily: "தினசரி", periodFortnight: "பதினைந்து நாள்", periodMonthly: "மாதம்", periodYearly: "ஆண்டு",
+    anchorDate: "தேதியைத் தேர்ந்தெடு", byCategory: "வகை வாரியாக", byPerson: "நபர் வாரியாக",
+    colCategory: "வகை", colPerson: "நபர்", colAmount: "தொகை",
+    noEntriesPeriod: "இந்தக் காலத்தில் பதிவுகள் இல்லை",
+    exportCsv: "இந்த அறிக்கையை CSV ஆக ஏற்றுமதி செய்",
+    validDateAmount: "சரியான தேதியையும் தொகையையும் உள்ளிடவும்.",
+    receiptRequiredAlert: (n) => `₹${n}க்கு மேற்பட்ட செலவுகளுக்கு ரசீது புகைப்படம் அவசியம்.`,
+    fileTooLarge: "சுருக்கிய பின்னும் இந்தக் கோப்பு மிகப் பெரியது. சிறிய புகைப்படம் அல்லது PDF தேர்ந்தெடுக்கவும்.",
+    couldNotSave: "சேமிக்க முடியவில்லை: ",
+    uploadFailed: "ரசீது பதிவேற்றம் தோல்வியடைந்தது: ",
+    noExport: "இந்தக் காலத்திற்கு ஏற்றுமதி செய்ய பதிவுகள் இல்லை.",
+    confirmDelete: "இந்தப் பதிவை நீக்கவா?",
+    selected: (name) => `தேர்ந்தெடுக்கப்பட்டது: ${name}`,
+    tabAdd: "சேர்", tabEntries: "பதிவுகள்", tabReports: "அறிக்கைகள்",
+    today: "இன்று"
+  }
+};
+let currentLang = localStorage.getItem("kanakku_lang") || "en";
+function t(key, ...args){
+  const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
+  const val = (key in dict) ? dict[key] : TRANSLATIONS.en[key];
+  return typeof val === "function" ? val(...args) : val;
+}
+function applyLanguage(){
+  document.documentElement.lang = currentLang;
+  document.getElementById("lang-select").value = currentLang;
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+  document.getElementById("receipt-required").textContent = t("receiptRequired", RECEIPT_THRESHOLD);
+  renderEntries();
+  if(document.getElementById("screen-reports").classList.contains("active")) renderReport();
+}
+function setLanguage(lang){
+  currentLang = lang;
+  localStorage.setItem("kanakku_lang", lang);
+  applyLanguage();
+}
 
 // ---------- LOGIN ----------
 function populateLogin(){
@@ -313,6 +417,7 @@ function enterApp(){
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("app-screen").style.display = "block";
   document.getElementById("whoami-name").textContent = currentPerson;
+  applyLanguage();
 }
 
 // ---------- TABS ----------
@@ -342,28 +447,71 @@ function toggleReceiptField(){
 document.getElementById("f-amount").addEventListener("input", toggleReceiptField);
 document.getElementById("f-receipt").addEventListener("change", (e) => {
   const f = e.target.files[0];
-  document.getElementById("receipt-preview").textContent = f ? `Selected: ${f.name}` : "";
+  document.getElementById("receipt-preview").textContent = f ? t("selected", f.name) : "";
 });
 
-function submitExpense(){
+// Resize + compress images client-side before upload (skips PDFs).
+// Cuts a typical 4-8MB phone photo down to a few hundred KB, which is what
+// makes uploads fast even on slow/rural mobile data.
+function compressImage(file, maxDim = 1280, quality = 0.72){
+  return new Promise((resolve, reject) => {
+    if(!file.type.startsWith("image/")){ resolve(file); return; }
+    const reader = new FileReader();
+    reader.onerror = () => resolve(file); // fall back to original on any issue
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => resolve(file);
+      img.onload = () => {
+        let { width, height } = img;
+        if(width > maxDim || height > maxDim){
+          if(width > height){ height = Math.round(height * maxDim / width); width = maxDim; }
+          else { width = Math.round(width * maxDim / height); height = maxDim; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if(!blob){ resolve(file); return; }
+          resolve(new File([blob], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" }));
+        }, "image/jpeg", quality);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function submitExpense(){
   const date = document.getElementById("f-date").value;
   const category = document.getElementById("f-category").value;
   const amount = parseFloat(document.getElementById("f-amount").value);
   const note = document.getElementById("f-note").value.trim();
   const fileInput = document.getElementById("f-receipt");
-  const file = fileInput.files[0];
+  const rawFile = fileInput.files[0];
 
   if(!date || !amount || amount <= 0){
-    alert("Please enter a valid date and amount.");
+    alert(t("validDateAmount"));
     return;
   }
-  if(amount > RECEIPT_THRESHOLD && !file){
-    alert(`A receipt photo is required for expenses over ₹${RECEIPT_THRESHOLD}.`);
+  if(amount > RECEIPT_THRESHOLD && !rawFile){
+    alert(t("receiptRequiredAlert", RECEIPT_THRESHOLD));
     return;
   }
 
   const saveBtn = document.getElementById("save-btn");
+  const progressEl = document.getElementById("upload-progress");
   saveBtn.disabled = true;
+
+  function resetForm(){
+    document.getElementById("f-amount").value = "";
+    document.getElementById("f-note").value = "";
+    document.getElementById("f-date").value = todayISO();
+    fileInput.value = "";
+    document.getElementById("receipt-preview").textContent = "";
+    document.getElementById("receipt-wrap").style.display = "none";
+    progressEl.style.display = "none";
+    saveBtn.disabled = false;
+  }
 
   function saveDoc(receiptUrl){
     expensesRef.add({
@@ -371,35 +519,43 @@ function submitExpense(){
       person: currentPerson,
       receiptUrl: receiptUrl || null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-      document.getElementById("f-amount").value = "";
-      document.getElementById("f-note").value = "";
-      document.getElementById("f-date").value = todayISO();
-      fileInput.value = "";
-      document.getElementById("receipt-preview").textContent = "";
-      document.getElementById("receipt-wrap").style.display = "none";
-      document.getElementById("upload-progress").style.display = "none";
-      saveBtn.disabled = false;
-    }).catch(err => {
-      alert("Could not save: " + err.message);
-      document.getElementById("upload-progress").style.display = "none";
+    }).then(resetForm).catch(err => {
+      alert(t("couldNotSave") + err.message);
+      progressEl.style.display = "none";
       saveBtn.disabled = false;
     });
   }
 
-  if(file){
-    document.getElementById("upload-progress").style.display = "block";
-    const path = `receipts/${Date.now()}_${currentPerson}_${file.name}`;
-    const ref = storage.ref().child(path);
-    ref.put(file).then(snap => snap.ref.getDownloadURL()).then(url => {
-      saveDoc(url);
-    }).catch(err => {
-      alert("Receipt upload failed: " + err.message);
-      document.getElementById("upload-progress").style.display = "none";
+  if(!rawFile){ saveDoc(null); return; }
+
+  try{
+    progressEl.style.display = "block";
+    progressEl.textContent = t("compressingImage");
+    const file = await compressImage(rawFile);
+
+    if(file.size > MAX_UPLOAD_BYTES){
+      alert(t("fileTooLarge"));
+      progressEl.style.display = "none";
       saveBtn.disabled = false;
+      return;
+    }
+
+    const path = `receipts/${Date.now()}_${currentPerson}_${file.name}`;
+    const uploadTask = storage.ref().child(path).put(file);
+    uploadTask.on("state_changed", (snap) => {
+      const pct = Math.round(100 * snap.bytesTransferred / snap.totalBytes);
+      progressEl.textContent = t("uploadingReceipt", pct);
+    }, (err) => {
+      alert(t("uploadFailed") + err.message);
+      progressEl.style.display = "none";
+      saveBtn.disabled = false;
+    }, () => {
+      uploadTask.snapshot.ref.getDownloadURL().then(saveDoc);
     });
-  } else {
-    saveDoc(null);
+  } catch(err){
+    alert(t("uploadFailed") + err.message);
+    progressEl.style.display = "none";
+    saveBtn.disabled = false;
   }
 }
 
@@ -412,14 +568,14 @@ function startSync(){
     if(document.getElementById("screen-reports").classList.contains("active")) renderReport();
   }, err => {
     document.getElementById("entries-list").innerHTML =
-      `<div class="empty-note">Sync error: ${err.message}</div>`;
+      `<div class="empty-note">${t("syncError")}${err.message}</div>`;
   });
 }
 
 function renderEntries(){
   const list = document.getElementById("entries-list");
   if(allExpenses.length === 0){
-    list.innerHTML = `<div class="empty-note">No entries yet. Add your first expense.</div>`;
+    list.innerHTML = `<div class="empty-note">${t("noEntries")}</div>`;
     return;
   }
   list.innerHTML = allExpenses.slice(0, 60).map(e => `
@@ -427,17 +583,17 @@ function renderEntries(){
       <div>
         <div class="cat">${escapeHtml(e.category)}</div>
         <div class="meta">${e.date} · ${escapeHtml(e.person)}${e.note ? " · " + escapeHtml(e.note) : ""}</div>
-        ${e.receiptUrl ? `<a href="${e.receiptUrl}" target="_blank" rel="noopener" style="font-size:0.75rem; color:var(--green); text-decoration:underline;">📎 View receipt</a>` : ""}
+        ${e.receiptUrl ? `<a href="${e.receiptUrl}" target="_blank" rel="noopener" style="font-size:0.75rem; color:var(--green); text-decoration:underline;">${t("viewReceipt")}</a>` : ""}
       </div>
       <div style="text-align:right;">
         <div class="amt">₹${Number(e.amount).toFixed(2)}</div>
-        <button class="del" onclick="deleteEntry('${e.id}')">delete</button>
+        <button class="del" onclick="deleteEntry('${e.id}')">${t("delete")}</button>
       </div>
     </div>
   `).join("");
 }
 function deleteEntry(id){
-  if(confirm("Delete this entry?")) expensesRef.doc(id).delete();
+  if(confirm(t("confirmDelete"))) expensesRef.doc(id).delete();
 }
 function escapeHtml(s){
   return (s || "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -459,12 +615,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function getRange(period, anchorISO){
   const anchor = new Date(anchorISO + "T00:00:00");
+  const locale = currentLang === "ta" ? "ta-IN" : "en-IN";
   let start, end, label;
   if(period === "daily"){
     start = new Date(anchor); end = new Date(anchor);
-    label = anchor.toDateString();
+    label = anchor.toLocaleDateString(locale, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   } else if(period === "fortnightly"){
-    // fortnight = the 1-15 or 16-end block containing the anchor date
     const day = anchor.getDate();
     if(day <= 15){
       start = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
@@ -473,11 +629,12 @@ function getRange(period, anchorISO){
       start = new Date(anchor.getFullYear(), anchor.getMonth(), 16);
       end = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
     }
-    label = `${start.toDateString()} – ${end.toDateString()}`;
+    const opts = { day: "numeric", month: "short" };
+    label = `${start.toLocaleDateString(locale, opts)} – ${end.toLocaleDateString(locale, opts)}`;
   } else if(period === "monthly"){
     start = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
     end = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
-    label = start.toLocaleString('default', { month: 'long', year: 'numeric' });
+    label = start.toLocaleDateString(locale, { month: "long", year: "numeric" });
   } else if(period === "yearly"){
     start = new Date(anchor.getFullYear(), 0, 1);
     end = new Date(anchor.getFullYear(), 11, 31);
@@ -511,7 +668,7 @@ function renderBreakdown(tableId, rows, key){
   const tbody = document.querySelector(`#${tableId} tbody`);
   const entries = Object.entries(totals).sort((a,b) => b[1]-a[1]);
   if(entries.length === 0){
-    tbody.innerHTML = `<tr><td colspan="2" style="color:#5B6478;">No entries in this period</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="2" style="color:#5B6478;">${t("noEntriesPeriod")}</td></tr>`;
     return;
   }
   tbody.innerHTML = entries.map(([k,v]) =>
@@ -521,7 +678,7 @@ function renderBreakdown(tableId, rows, key){
 
 function exportCSV(){
   const rows = window._lastReportRows || [];
-  if(rows.length === 0){ alert("No entries to export for this period."); return; }
+  if(rows.length === 0){ alert(t("noExport")); return; }
   let csv = "Date,Person,Category,Amount,Note\n";
   rows.forEach(e => {
     csv += `${e.date},"${(e.person||"").replace(/"/g,'""')}","${(e.category||"").replace(/"/g,'""')}",${e.amount},"${(e.note||"").replace(/"/g,'""')}"\n`;
@@ -540,6 +697,8 @@ populateLogin();
 populateForm();
 if(currentPerson){
   enterApp();
+} else {
+  document.getElementById("lang-select").value = currentLang; // harmless if hidden
 }
 startSync();
 
