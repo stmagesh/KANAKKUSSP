@@ -35,3 +35,7 @@ const CATEGORIES = [
   "Food", "Travel", "Site Material", "Labour Wages",
   "Utilities", "Rent", "Medical", "Miscellaneous","Office Setup"
 ];
+// Receipt uploads need Firebase Storage, which needs the paid "Blaze" plan.
+// Set this to true once Storage is upgraded and working — until then, leave
+// it false and the receipt field stays hidden so nobody hits upload errors.
+const RECEIPT_UPLOAD_ENABLED = false;
