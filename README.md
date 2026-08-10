@@ -95,6 +95,10 @@ a URL like `https://yourname.github.io/kanakku`.
 - Entries with a receipt (once enabled) show a **📎 View receipt** link that
   opens the image/PDF.
 - **Entries** tab — live list of everyone's entries, newest first; delete your own.
+- **Switch user** (top-right, once logged in) — asks for confirmation, then
+  fully logs out: clears the cached app data and reloads the page, so the
+  next person always lands on a clean login screen and the Add tab — never
+  stuck on whatever screen the previous person left open.
 - **Reports** tab — pick Daily / Fortnightly / Monthly / Yearly and an anchor
   date; see the total plus breakdowns by category and by person; export the
   period as a CSV (opens fine in Excel).

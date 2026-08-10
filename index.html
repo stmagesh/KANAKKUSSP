@@ -330,6 +330,7 @@ const TRANSLATIONS = {
     uploadFailed: "Receipt upload failed: ",
     noExport: "No entries to export for this period.",
     confirmDelete: "Delete this entry?",
+    confirmLogout: "Log out? You'll need your PIN again to log back in.",
     selected: (name) => `Selected: ${name}`,
     tabAdd: "Add", tabEntries: "Entries", tabReports: "Reports",
     today: "Today"
@@ -365,6 +366,7 @@ const TRANSLATIONS = {
     uploadFailed: "ரசீது பதிவேற்றம் தோல்வியடைந்தது: ",
     noExport: "இந்தக் காலத்திற்கு ஏற்றுமதி செய்ய பதிவுகள் இல்லை.",
     confirmDelete: "இந்தப் பதிவை நீக்கவா?",
+    confirmLogout: "வெளியேறவா? மீண்டும் நுழைய உங்கள் பின் தேவைப்படும்.",
     selected: (name) => `தேர்ந்தெடுக்கப்பட்டது: ${name}`,
     tabAdd: "சேர்", tabEntries: "பதிவுகள்", tabReports: "அறிக்கைகள்",
     today: "இன்று"
@@ -408,11 +410,26 @@ function doLogin(){
   localStorage.setItem("kanakku_person", person);
   enterApp();
 }
-function doLogout(){
+async function doLogout(){
+  if(!confirm(t("confirmLogout"))) return;
+
   localStorage.removeItem("kanakku_person");
   currentPerson = null;
-  document.getElementById("app-screen").style.display = "none";
-  document.getElementById("login-screen").style.display = "block";
+
+  // Clear any cached app shell so the next login always starts fresh —
+  // on the Add screen, not whatever tab/report was open before logging out.
+  try{
+    if('caches' in window){
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    if('serviceWorker' in navigator){
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+  } catch(e){ /* non-fatal — proceed to reload regardless */ }
+
+  location.reload();
 }
 function enterApp(){
   document.getElementById("login-screen").style.display = "none";
@@ -440,7 +457,7 @@ function todayISO(){
   return d.toISOString().slice(0,10);
 }
 function toggleReceiptField(){
- if(!RECEIPT_ENABLED){
+  if(!RECEIPT_ENABLED){
     document.getElementById("receipt-wrap").style.display = "none";
     return;
   }

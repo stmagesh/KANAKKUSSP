@@ -5,12 +5,12 @@
 // (See README.md for the full walkthrough — takes about 5 minutes)
 // ============================================================
 const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY_HERE",
-  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
-  projectId: "PASTE_YOUR_PROJECT_ID",
-  storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId: "PASTE_APP_ID"
+  apiKey: "AIzaSyAXDo_xdN7ovoY23O8dHFwKlbif0eNzamg",
+  authDomain: "kanakkussp.firebaseapp.com",
+  projectId: "kanakkussp",
+  storageBucket: "kanakkussp.firebasestorage.app",
+  messagingSenderId: "862062563758",
+  appId: "1:862062563758:web:0b580ec38fc326cfa3f83f"
 };
 
 // ============================================================
@@ -19,11 +19,9 @@ const firebaseConfig = {
 // wrong name. Each person only needs to know their own PIN.
 // ============================================================
 const PEOPLE_PINS = {
-  "Person 1": "1111",
-  "Person 2": "2222",
-  "Person 3": "3333",
-  "Person 4": "4444",
-  "Person 5": "5555"
+  "Swami": "4345",
+  "Senthil": "3176",
+  "Samy": "8327"
 };
 
 // ============================================================
