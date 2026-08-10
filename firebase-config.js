@@ -5,36 +5,38 @@
 // (See README.md for the full walkthrough — takes about 5 minutes)
 // ============================================================
 const firebaseConfig = {
-  apiKey: "AIzaSyAXDo_xdN7ovoY23O8dHFwKlbif0eNzamg",
-  authDomain: "kanakkussp.firebaseapp.com",
-  projectId: "kanakkussp",
-  storageBucket: "kanakkussp.firebasestorage.app",
-  messagingSenderId: "862062563758",
-  appId: "1:862062563758:web:0b580ec38fc326cfa3f83f"
+  apiKey: "PASTE_YOUR_API_KEY_HERE",
+  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
+  projectId: "PASTE_YOUR_PROJECT_ID",
+  storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
+  messagingSenderId: "PASTE_SENDER_ID",
+  appId: "PASTE_APP_ID"
 };
 
 // ============================================================
-// STEP 2 of setup: list the people who will log expenses.
-// Whatever name they tap on the login screen is how their
-// entries get tagged. Add or remove names freely.
+// STEP 2 of setup: list each person and give them their own PIN.
+// This prevents someone accidentally logging entries under the
+// wrong name. Each person only needs to know their own PIN.
 // ============================================================
-const PEOPLE = ["Swami", "Senthil", "Periyasamy", "Person 4", "Person 5"];
-
-// A single shared PIN everyone uses to open the app.
-// Change this to something only your team knows.
-
 const PEOPLE_PINS = {
-  "Swami": "4345",
-  "Senthil": "3176",
-  "Periyasamy": "8327"
+  "Person 1": "1111",
+  "Person 2": "2222",
+  "Person 3": "3333",
+  "Person 4": "4444",
+  "Person 5": "5555"
 };
+
 // ============================================================
 // STEP 3 (optional): customize expense categories.
 // ============================================================
 const CATEGORIES = [
   "Food", "Travel", "Site Material", "Labour Wages",
-  "Utilities", "Rent", "Medical", "Miscellaneous","Office Setup"
+  "Utilities", "Rent", "Medical", "Miscellaneous"
 ];
+
+// Expenses above this amount (in ₹) will require a receipt photo/PDF upload.
+const RECEIPT_REQUIRED_ABOVE = 500;
+
 // Receipt uploads need Firebase Storage, which needs the paid "Blaze" plan.
 // Set this to true once Storage is upgraded and working — until then, leave
 // it false and the receipt field stays hidden so nobody hits upload errors.

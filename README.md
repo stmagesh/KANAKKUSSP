@@ -85,19 +85,42 @@ a URL like `https://yourname.github.io/kanakku`.
   choice is remembered on that device. Names, categories, and CSV exports stay
   in whatever language you typed them in `firebase-config.js` — only the app's
   own labels/buttons/messages translate.
-- **Add** tab — log an expense (date, category, amount, note). Once the amount
-  goes above ₹500 (editable via `RECEIPT_REQUIRED_ABOVE` in
-  `firebase-config.js`), a receipt upload field appears and becomes required —
-  it accepts a photo (camera opens directly on phones) or a PDF. Photos are
-  automatically resized and compressed in the browser before upload (down to
-  roughly a few hundred KB), so uploads stay fast even on slow mobile data —
-  you'll see a live upload percentage. PDFs are uploaded as-is; keep them
-  under ~8MB.
-- Entries with a receipt show a **📎 View receipt** link that opens the image/PDF.
+- **Add** tab — log an expense (date, category, amount, note).
+- **Receipt uploads are currently switched off** (`RECEIPT_UPLOAD_ENABLED =
+  false` in `firebase-config.js`) because they need Firebase Storage, which
+  requires upgrading to the paid "Blaze" plan (still free at this usage level,
+  but needs a card on file — see "Enabling receipt uploads" below). Once
+  amounts go above ₹500 (`RECEIPT_REQUIRED_ABOVE`), the app currently just
+  saves the entry without asking for a receipt.
+- Entries with a receipt (once enabled) show a **📎 View receipt** link that
+  opens the image/PDF.
 - **Entries** tab — live list of everyone's entries, newest first; delete your own.
 - **Reports** tab — pick Daily / Fortnightly / Monthly / Yearly and an anchor
   date; see the total plus breakdowns by category and by person; export the
   period as a CSV (opens fine in Excel).
+
+## Enabling receipt uploads later
+1. In Firebase Console → Storage, click **Upgrade project** and link a
+   billing account (Blaze plan). Storage has its own free tier — 5GB stored,
+   1GB downloaded/day — so a small team logging receipts stays at ₹0 in
+   practice; the card is just how Google verifies the account.
+2. Go to **Storage → Rules** and publish:
+   ```
+   rules_version = '2';
+   service firebase.storage {
+     match /b/{bucket}/o {
+       match /receipts/{allPaths=**} {
+         allow read, write: if true;
+       }
+     }
+   }
+   ```
+3. In `firebase-config.js`, change `RECEIPT_UPLOAD_ENABLED` to `true`.
+4. Update the file in your GitHub repo and commit — the receipt field will
+   reappear automatically, no other changes needed. Photos are resized and
+   compressed in the browser before upload (down to roughly a few hundred KB)
+   so uploads stay fast on slow mobile data, with a live upload percentage.
+   PDFs upload as-is; keep them under ~8MB.
 
 ## Notes
 - Fortnightly reports split each month into 1st–15th and 16th–end.

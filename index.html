@@ -290,6 +290,7 @@ const db = firebase.firestore();
 const storage = firebase.storage();
 const expensesRef = db.collection("expenses");
 const RECEIPT_THRESHOLD = (typeof RECEIPT_REQUIRED_ABOVE !== "undefined") ? RECEIPT_REQUIRED_ABOVE : 500;
+const RECEIPT_ENABLED = (typeof RECEIPT_UPLOAD_ENABLED !== "undefined") ? RECEIPT_UPLOAD_ENABLED : true;
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB safety cap after compression
 
 let currentPerson = localStorage.getItem("kanakku_person") || null;
@@ -439,6 +440,10 @@ function todayISO(){
   return d.toISOString().slice(0,10);
 }
 function toggleReceiptField(){
+ if(!RECEIPT_ENABLED){
+    document.getElementById("receipt-wrap").style.display = "none";
+    return;
+  }
   const amount = parseFloat(document.getElementById("f-amount").value) || 0;
   const wrap = document.getElementById("receipt-wrap");
   wrap.style.display = amount > 0 ? "block" : "none";
@@ -487,13 +492,13 @@ async function submitExpense(){
   const amount = parseFloat(document.getElementById("f-amount").value);
   const note = document.getElementById("f-note").value.trim();
   const fileInput = document.getElementById("f-receipt");
-  const rawFile = fileInput.files[0];
+  const rawFile = RECEIPT_ENABLED ? fileInput.files[0] : null;
 
   if(!date || !amount || amount <= 0){
     alert(t("validDateAmount"));
     return;
   }
-  if(amount > RECEIPT_THRESHOLD && !rawFile){
+  if(RECEIPT_ENABLED && amount > RECEIPT_THRESHOLD && !rawFile){
     alert(t("receiptRequiredAlert", RECEIPT_THRESHOLD));
     return;
   }
@@ -695,6 +700,7 @@ function exportCSV(){
 // ---------- INIT ----------
 populateLogin();
 populateForm();
+toggleReceiptField();
 if(currentPerson){
   enterApp();
 } else {
