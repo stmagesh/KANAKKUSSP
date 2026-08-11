@@ -141,6 +141,10 @@ a URL like `https://yourname.github.io/kanakku`.
    PDFs upload as-is; keep them under ~8MB.
 
 ## Notes
+- **Your logo now appears in the app itself** — on the login screen and in
+  the header next to "Kanakku" — not just as the install/home-screen icon.
+  It's pulled from `icon-192.png`, so if you ever update your logo, replacing
+  that one file updates it everywhere at once.
 - Fortnightly reports split each month into 1st–15th and 16th–end.
 - **Categories are bilingual and shared live.** `firebase-config.js` seeds a
   starting list of ~26 common categories in English + Tamil. From inside the

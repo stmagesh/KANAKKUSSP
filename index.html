@@ -97,6 +97,26 @@
     font-family:'Zilla Slab',serif;
     margin:0 0 4px;
   }
+  .brand-logo{
+    display:block;
+    width:64px; height:64px;
+    border-radius:50%;
+    border:2px solid var(--brass);
+    object-fit:cover;
+    margin:0 auto 14px;
+  }
+  .header-title{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .header-logo{
+    width:40px; height:40px;
+    border-radius:50%;
+    border:2px solid var(--brass);
+    object-fit:cover;
+    flex-shrink:0;
+  }
   .login-card p.hint{ color:var(--ink-soft); font-size:0.85rem; margin-top:0; margin-bottom:20px;}
   label{ font-size:0.8rem; font-weight:600; color:var(--ink-soft); display:block; margin-bottom:6px; }
   select, input, button, textarea{
@@ -194,6 +214,7 @@
 <!-- ===================== LOGIN ===================== -->
 <div id="login-screen">
   <div class="login-card">
+    <img src="icon-192.png?v=2" alt="SSP Infra Groups" class="brand-logo">
     <h2>Kanakku</h2>
     <p class="hint" data-i18n="loginHint">The shared expense ledger. Pick your name to continue.</p>
     <label for="person-select" data-i18n="yourName">Your name</label>
@@ -209,8 +230,11 @@
 <div id="app-screen" style="display:none;">
   <header>
     <div class="header-title">
-      <h1>Kanakku</h1>
-      <div class="sub" data-i18n="tagline">Shared expense ledger</div>
+      <img src="icon-192.png?v=2" alt="SSP Infra Groups" class="header-logo">
+      <div>
+        <h1>Kanakku</h1>
+        <div class="sub" data-i18n="tagline">Shared expense ledger</div>
+      </div>
     </div>
     <div id="whoami">
       <select id="lang-select" onchange="setLanguage(this.value)">
