@@ -103,10 +103,16 @@ a URL like `https://yourname.github.io/kanakku`.
   users can delete only entries they personally logged. Anyone listed in
   `ADMIN_USERS` (in `firebase-config.js`) sees a **Delete** button on *every*
   entry, and gets an **Admin** badge next to their name in the header.
-- **Switch user** (top-right, once logged in) — asks for confirmation, then
+- **Logout** (top-right, once logged in) — asks for confirmation, then
   fully logs out: clears the cached app data and reloads the page, so the
   next person always lands on a clean login screen and the Add tab — never
   stuck on whatever screen the previous person left open.
+- **Auto-logout after 5 minutes idle** — if the app is left open with no
+  taps, scrolls, or typing for 5 minutes, it automatically logs out (same
+  full cleanup as manual logout) and shows a short message. Protects against
+  someone walking away from an unlocked phone while still logged in. The
+  5-minute window is set by `INACTIVITY_LIMIT_MS` near the top of the script
+  in `index.html` if you ever want it longer or shorter.
 - **Reports** tab — pick Daily / Fortnightly / Monthly / Yearly and an anchor
   date; see the total plus breakdowns by category and by person; export the
   period as a CSV (opens fine in Excel).

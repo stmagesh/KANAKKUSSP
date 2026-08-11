@@ -318,7 +318,7 @@ const TRANSLATIONS = {
     yourName: "Your name", yourPin: "Your PIN", enterPin: "Enter your PIN",
     openLedger: "Open Ledger",
     wrongPin: "Incorrect PIN for this name. Try again.",
-    switchUser: "Switch user",
+    switchUser: "Logout",
     adminBadge: "Admin",
     newEntry: "New Entry", date: "Date", category: "Category", amount: "Amount (₹)",
     note: "Note (optional)", notePlaceholder: "e.g. cement bags, auto fare",
@@ -352,6 +352,7 @@ const TRANSLATIONS = {
     noExport: "No entries to export for this period.",
     confirmDelete: "Delete this entry?",
     confirmLogout: "Log out? You'll need your PIN again to log back in.",
+    autoLogoutMessage: "You were logged out after 5 minutes of no activity. Please log in again.",
     selected: (name) => `Selected: ${name}`,
     tabAdd: "Add", tabEntries: "Entries", tabReports: "Reports",
     today: "Today"
@@ -362,7 +363,7 @@ const TRANSLATIONS = {
     yourName: "உங்கள் பெயர்", yourPin: "உங்கள் பின்", enterPin: "உங்கள் பின்னை உள்ளிடவும்",
     openLedger: "கணக்கேட்டைத் திற",
     wrongPin: "இந்தப் பெயருக்கு தவறான பின். மீண்டும் முயற்சிக்கவும்.",
-    switchUser: "பயனரை மாற்று",
+    switchUser: "வெளியேறு",
     adminBadge: "நிர்வாகி",
     newEntry: "புதிய பதிவு", date: "தேதி", category: "வகை", amount: "தொகை (₹)",
     note: "குறிப்பு (விருப்பம்)", notePlaceholder: "எ.கா. சிமெண்ட் மூட்டைகள், ஆட்டோ கட்டணம்",
@@ -396,6 +397,7 @@ const TRANSLATIONS = {
     noExport: "இந்தக் காலத்திற்கு ஏற்றுமதி செய்ய பதிவுகள் இல்லை.",
     confirmDelete: "இந்தப் பதிவை நீக்கவா?",
     confirmLogout: "வெளியேறவா? மீண்டும் நுழைய உங்கள் பின் தேவைப்படும்.",
+    autoLogoutMessage: "5 நிமிடங்கள் செயலற்று இருந்ததால் வெளியேற்றப்பட்டீர்கள். மீண்டும் உள்நுழையவும்.",
     selected: (name) => `தேர்ந்தெடுக்கப்பட்டது: ${name}`,
     tabAdd: "சேர்", tabEntries: "பதிவுகள்", tabReports: "அறிக்கைகள்",
     today: "இன்று"
@@ -443,14 +445,7 @@ function doLogin(){
   localStorage.setItem("kanakku_person", person);
   enterApp();
 }
-async function doLogout(){
-  if(!confirm(t("confirmLogout"))) return;
-
-  localStorage.removeItem("kanakku_person");
-  currentPerson = null;
-
-  // Clear any cached app shell so the next login always starts fresh —
-  // on the Add screen, not whatever tab/report was open before logging out.
+async function clearCachedAppShell(){
   try{
     if('caches' in window){
       const keys = await caches.keys();
@@ -460,15 +455,45 @@ async function doLogout(){
       const regs = await navigator.serviceWorker.getRegistrations();
       await Promise.all(regs.map(r => r.unregister()));
     }
-  } catch(e){ /* non-fatal — proceed to reload regardless */ }
-
+  } catch(e){ /* non-fatal — proceed regardless */ }
+}
+async function doLogout(){
+  if(!confirm(t("confirmLogout"))) return;
+  clearTimeout(inactivityTimer);
+  localStorage.removeItem("kanakku_person");
+  currentPerson = null;
+  // Clear any cached app shell so the next login always starts fresh —
+  // on the Add screen, not whatever tab/report was open before logging out.
+  await clearCachedAppShell();
   location.reload();
 }
+
+// ---------- AUTO-LOGOUT AFTER INACTIVITY ----------
+const INACTIVITY_LIMIT_MS = 5 * 60 * 1000; // 5 minutes
+let inactivityTimer = null;
+function resetInactivityTimer(){
+  if(!currentPerson) return; // only matters while logged in
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(autoLogout, INACTIVITY_LIMIT_MS);
+}
+async function autoLogout(){
+  if(!currentPerson) return;
+  localStorage.removeItem("kanakku_person");
+  currentPerson = null;
+  await clearCachedAppShell();
+  alert(t("autoLogoutMessage"));
+  location.reload();
+}
+["click", "keydown", "touchstart", "mousemove", "scroll"].forEach(evt =>
+  document.addEventListener(evt, resetInactivityTimer, { passive: true })
+);
+
 function enterApp(){
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("app-screen").style.display = "block";
   document.getElementById("whoami-name").textContent = currentPerson + (isAdmin() ? ` · ${t("adminBadge")}` : "");
   applyLanguage();
+  resetInactivityTimer();
 }
 
 // ---------- TABS ----------
