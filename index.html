@@ -39,8 +39,12 @@
   header{
     background:var(--ink);
     color:var(--paper);
-    padding:18px 20px 14px;
+    padding:14px 20px;
     position:sticky; top:0; z-index:10;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
   }
   header h1{
     font-family:'Zilla Slab',serif;
@@ -54,16 +58,22 @@
     margin-top:2px;
   }
   #whoami{
-    position:absolute; right:20px; top:16px;
-    font-size:0.75rem; color:#B9C2D8; text-align:right;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:5px;
+    font-size:0.75rem;
+    color:#B9C2D8;
+    text-align:right;
+    flex-shrink:0;
   }
   #whoami button{
     background:none; border:1px solid #B9C2D8; color:#B9C2D8;
-    font-size:0.7rem; padding:3px 8px; border-radius:3px; margin-top:4px; cursor:pointer;
+    font-size:0.7rem; padding:3px 8px; border-radius:3px; cursor:pointer;
   }
   #lang-select{
     background:var(--ink); border:1px solid #B9C2D8; color:var(--paper);
-    font-size:0.72rem; padding:3px 6px; border-radius:3px; margin-bottom:5px;
+    font-size:0.72rem; padding:3px 6px; border-radius:3px;
   }
 
   main{ max-width:640px; margin:0 auto; padding:18px 16px 30px; }
@@ -198,15 +208,17 @@
 <!-- ===================== APP ===================== -->
 <div id="app-screen" style="display:none;">
   <header>
-    <h1>Kanakku</h1>
-    <div class="sub" data-i18n="tagline">Shared expense ledger</div>
+    <div class="header-title">
+      <h1>Kanakku</h1>
+      <div class="sub" data-i18n="tagline">Shared expense ledger</div>
+    </div>
     <div id="whoami">
       <select id="lang-select" onchange="setLanguage(this.value)">
         <option value="en">English</option>
         <option value="ta">தமிழ்</option>
       </select>
       <div id="whoami-name"></div>
-      <button onclick="doLogout()" data-i18n="switchUser">Switch user</button>
+      <button onclick="doLogout()" data-i18n="switchUser">Logout</button>
     </div>
   </header>
   <div class="brass-rule"></div>
