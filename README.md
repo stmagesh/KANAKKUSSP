@@ -23,10 +23,15 @@ needed). Reports: Daily, Fortnightly, Monthly, Yearly, with CSV export.
        match /expenses/{doc} {
          allow read, write: if true;
        }
+       match /categories/{doc} {
+         allow read, write: if true;
+       }
      }
    }
    ```
    Click **Publish**.
+   (The `categories` collection is what lets anyone add a new expense category
+   from inside the app and have it instantly show up for everyone else.)
 
 ### 1b. Enable Firebase Storage (for receipt photos)
 1. In the left sidebar, use the search icon → type **Storage** → click **Storage**.
@@ -94,7 +99,10 @@ a URL like `https://yourname.github.io/kanakku`.
   saves the entry without asking for a receipt.
 - Entries with a receipt (once enabled) show a **📎 View receipt** link that
   opens the image/PDF.
-- **Entries** tab — live list of everyone's entries, newest first; delete your own.
+- **Entries** tab — live list of everyone's entries, newest first. Regular
+  users can delete only entries they personally logged. Anyone listed in
+  `ADMIN_USERS` (in `firebase-config.js`) sees a **Delete** button on *every*
+  entry, and gets an **Admin** badge next to their name in the header.
 - **Switch user** (top-right, once logged in) — asks for confirmation, then
   fully logs out: clears the cached app data and reloads the page, so the
   next person always lands on a clean login screen and the Add tab — never
@@ -128,11 +136,26 @@ a URL like `https://yourname.github.io/kanakku`.
 
 ## Notes
 - Fortnightly reports split each month into 1st–15th and 16th–end.
-- Categories are editable in `firebase-config.js` under `CATEGORIES`. Type
-  them in Tamil, English, or both — they're user data, so the app doesn't
-  translate them for you.
+- **Categories are bilingual and shared live.** `firebase-config.js` seeds a
+  starting list of ~26 common categories in English + Tamil. From inside the
+  app, the category dropdown always ends with **"+ Add new category"** — pick
+  it, type an English name (and optionally a Tamil one), tap **Add category**,
+  and it's saved to the shared database instantly, appearing in everyone
+  else's dropdown too — no file editing or redeploying needed. The category
+  shown in each entry, and in report breakdowns, automatically follows
+  whichever language is currently selected. CSV exports always use the
+  English name, for consistency when opening in Excel.
 - Everything is timestamped by calendar date, not device time zone, so entries
   from different locations line up correctly.
+- **Admin delete rights are set in `ADMIN_USERS`** in `firebase-config.js` —
+  currently `["Swami"]`. Add more names to give others the same rights, or
+  remove the name to leave nobody with admin delete access (everyone would
+  then only delete their own entries). **Important:** this is an in-app
+  restriction, not a database-level one — the app has no real login system
+  behind the PINs, so Firestore itself can't verify who's asking. It's a
+  sensible setup for a small trusted team, but someone with enough technical
+  know-how (browser dev tools) could bypass it. A hard, unbypassable version
+  needs real Firebase Authentication — ask if you'd like that upgrade.
 - If you outgrow this PIN model (want to fully prevent PIN-sharing, add an
   admin-only deletion role, etc.), the next step is Firebase Authentication —
   happy to extend this when you're ready.

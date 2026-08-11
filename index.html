@@ -206,7 +206,7 @@
         <option value="ta">தமிழ்</option>
       </select>
       <div id="whoami-name"></div>
-      <button onclick="doLogout()" data-i18n="switchUser">Logout</button>
+      <button onclick="doLogout()" data-i18n="switchUser">Switch user</button>
     </div>
   </header>
   <div class="brass-rule"></div>
@@ -220,6 +220,16 @@
         <input type="date" id="f-date">
         <label data-i18n="category">Category</label>
         <select class="field" id="f-category"></select>
+        <div id="new-category-wrap" style="display:none; background:var(--paper); border:1px dashed var(--brass); border-radius:5px; padding:12px; margin:-6px 0 14px;">
+          <label data-i18n="newCategoryEn" style="margin-bottom:4px;">Category name (English)</label>
+          <input type="text" id="new-cat-en" style="margin-bottom:10px;">
+          <label data-i18n="newCategoryTa" style="margin-bottom:4px;">Category name (Tamil) — optional</label>
+          <input type="text" id="new-cat-ta" style="margin-bottom:10px;">
+          <div style="display:flex; gap:8px;">
+            <button type="button" onclick="addNewCategory()" data-i18n="addCategoryBtn" style="flex:1; padding:9px; background:var(--ink); color:var(--paper); border:none; border-radius:5px; font-weight:600; cursor:pointer;">Add category</button>
+            <button type="button" onclick="cancelNewCategory()" data-i18n="cancel" style="flex:1; padding:9px; background:var(--card); color:var(--ink-soft); border:1px solid var(--paper-line); border-radius:5px; font-weight:600; cursor:pointer;">Cancel</button>
+          </div>
+        </div>
         <label data-i18n="amount">Amount (₹)</label>
         <input type="number" class="amount-field" id="f-amount" placeholder="0.00" min="0" step="0.01">
         <label data-i18n="note">Note (optional)</label>
@@ -289,6 +299,9 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const storage = firebase.storage();
 const expensesRef = db.collection("expenses");
+const categoriesRef = db.collection("categories");
+let dynamicCategories = []; // categories added at runtime by any user, live-synced
+let pendingCategorySelect = null;
 const RECEIPT_THRESHOLD = (typeof RECEIPT_REQUIRED_ABOVE !== "undefined") ? RECEIPT_REQUIRED_ABOVE : 500;
 const RECEIPT_ENABLED = (typeof RECEIPT_UPLOAD_ENABLED !== "undefined") ? RECEIPT_UPLOAD_ENABLED : true;
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB safety cap after compression
@@ -305,9 +318,17 @@ const TRANSLATIONS = {
     yourName: "Your name", yourPin: "Your PIN", enterPin: "Enter your PIN",
     openLedger: "Open Ledger",
     wrongPin: "Incorrect PIN for this name. Try again.",
-    switchUser: "Logout",
+    switchUser: "Switch user",
+    adminBadge: "Admin",
     newEntry: "New Entry", date: "Date", category: "Category", amount: "Amount (₹)",
     note: "Note (optional)", notePlaceholder: "e.g. cement bags, auto fare",
+    addNewCategory: "+ Add new category",
+    newCategoryEn: "Category name (English)",
+    newCategoryTa: "Category name (Tamil) — optional",
+    addCategoryBtn: "Add category",
+    cancel: "Cancel",
+    categoryNameRequired: "Please type a category name.",
+    categoryExists: "That category already exists — selecting it for you.",
     receiptLabel: "Receipt / bill photo",
     receiptRequired: (n) => `(required over ₹${n})`,
     compressingImage: "Preparing image…",
@@ -342,8 +363,16 @@ const TRANSLATIONS = {
     openLedger: "கணக்கேட்டைத் திற",
     wrongPin: "இந்தப் பெயருக்கு தவறான பின். மீண்டும் முயற்சிக்கவும்.",
     switchUser: "பயனரை மாற்று",
+    adminBadge: "நிர்வாகி",
     newEntry: "புதிய பதிவு", date: "தேதி", category: "வகை", amount: "தொகை (₹)",
     note: "குறிப்பு (விருப்பம்)", notePlaceholder: "எ.கா. சிமெண்ட் மூட்டைகள், ஆட்டோ கட்டணம்",
+    addNewCategory: "+ புதிய வகையைச் சேர்",
+    newCategoryEn: "வகையின் பெயர் (ஆங்கிலம்)",
+    newCategoryTa: "வகையின் பெயர் (தமிழ்) — விருப்பம்",
+    addCategoryBtn: "வகையைச் சேர்",
+    cancel: "ரத்துசெய்",
+    categoryNameRequired: "வகையின் பெயரை உள்ளிடவும்.",
+    categoryExists: "இந்த வகை ஏற்கனவே உள்ளது — அதைத் தேர்ந்தெடுக்கிறோம்.",
     receiptLabel: "ரசீது / பில் புகைப்படம்",
     receiptRequired: (n) => `(₹${n}க்கு மேல் அவசியம்)`,
     compressingImage: "படம் தயாராகிறது…",
@@ -384,6 +413,10 @@ function applyLanguage(){
   document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll("[data-i18n-placeholder]").forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
   document.getElementById("receipt-required").textContent = t("receiptRequired", RECEIPT_THRESHOLD);
+  if(currentPerson){
+    document.getElementById("whoami-name").textContent = currentPerson + (isAdmin() ? ` · ${t("adminBadge")}` : "");
+  }
+  renderCategoryDropdown();
   renderEntries();
   if(document.getElementById("screen-reports").classList.contains("active")) renderReport();
 }
@@ -434,7 +467,7 @@ async function doLogout(){
 function enterApp(){
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("app-screen").style.display = "block";
-  document.getElementById("whoami-name").textContent = currentPerson;
+  document.getElementById("whoami-name").textContent = currentPerson + (isAdmin() ? ` · ${t("adminBadge")}` : "");
   applyLanguage();
 }
 
@@ -450,7 +483,75 @@ function switchTab(screenId, btn){
 // ---------- ADD EXPENSE ----------
 function populateForm(){
   document.getElementById("f-date").value = todayISO();
-  document.getElementById("f-category").innerHTML = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join("");
+  renderCategoryDropdown();
+}
+function mergedCategories(){
+  // Static defaults from firebase-config.js, plus anything added live by any
+  // user (from Firestore). If a name collides, the live-added one wins so
+  // edits made from the app itself always take precedence.
+  const map = new Map();
+  CATEGORIES.forEach(c => map.set(c.en.toLowerCase(), c));
+  dynamicCategories.forEach(c => map.set(c.en.toLowerCase(), c));
+  return Array.from(map.values());
+}
+function categoryLabel(enKey){
+  const found = mergedCategories().find(c => c.en.toLowerCase() === String(enKey).toLowerCase());
+  if(!found) return enKey; // older entry, or category since removed — show raw value
+  return currentLang === "ta" ? (found.ta || found.en) : found.en;
+}
+function renderCategoryDropdown(preserveValue){
+  const sel = document.getElementById("f-category");
+  const prev = preserveValue !== undefined ? preserveValue : sel.value;
+  const options = mergedCategories().map(c =>
+    `<option value="${escapeHtml(c.en)}">${escapeHtml(currentLang === "ta" ? (c.ta || c.en) : c.en)}</option>`
+  ).join("");
+  sel.innerHTML = options + `<option value="__new__">${escapeHtml(t("addNewCategory"))}</option>`;
+  if(prev && mergedCategories().some(c => c.en === prev)){
+    sel.value = prev;
+  }
+}
+document.getElementById("f-category").addEventListener("change", (e) => {
+  if(e.target.value === "__new__"){
+    document.getElementById("new-category-wrap").style.display = "block";
+    document.getElementById("new-cat-en").value = "";
+    document.getElementById("new-cat-ta").value = "";
+    document.getElementById("new-cat-en").focus();
+  } else {
+    document.getElementById("new-category-wrap").style.display = "none";
+  }
+});
+function cancelNewCategory(){
+  document.getElementById("new-category-wrap").style.display = "none";
+  const merged = mergedCategories();
+  if(merged.length) document.getElementById("f-category").value = merged[0].en;
+}
+function addNewCategory(){
+  const en = document.getElementById("new-cat-en").value.trim();
+  const ta = document.getElementById("new-cat-ta").value.trim();
+  if(!en){ alert(t("categoryNameRequired")); return; }
+
+  const existing = mergedCategories().find(c => c.en.toLowerCase() === en.toLowerCase());
+  if(existing){
+    alert(t("categoryExists"));
+    document.getElementById("new-category-wrap").style.display = "none";
+    renderCategoryDropdown(existing.en);
+    return;
+  }
+
+  pendingCategorySelect = en;
+  categoriesRef.add({ en, ta: ta || en }).catch(err => {
+    alert(t("couldNotSave") + err.message);
+  });
+  document.getElementById("new-category-wrap").style.display = "none";
+}
+function startCategorySync(){
+  categoriesRef.onSnapshot(snap => {
+    dynamicCategories = [];
+    snap.forEach(doc => dynamicCategories.push(doc.data()));
+    const selectNow = pendingCategorySelect;
+    pendingCategorySelect = null;
+    renderCategoryDropdown(selectNow || undefined);
+  }, () => { /* if categories collection/rules aren't set up yet, defaults still work */ });
 }
 function todayISO(){
   const d = new Date();
@@ -513,6 +614,11 @@ async function submitExpense(){
 
   if(!date || !amount || amount <= 0){
     alert(t("validDateAmount"));
+    return;
+  }
+  if(category === "__new__"){
+    alert(t("categoryNameRequired"));
+    document.getElementById("new-cat-en").focus();
     return;
   }
   if(RECEIPT_ENABLED && amount > RECEIPT_THRESHOLD && !rawFile){
@@ -594,25 +700,31 @@ function startSync(){
   });
 }
 
+function isAdmin(){
+  return (typeof ADMIN_USERS !== "undefined") && ADMIN_USERS.includes(currentPerson);
+}
 function renderEntries(){
   const list = document.getElementById("entries-list");
   if(allExpenses.length === 0){
     list.innerHTML = `<div class="empty-note">${t("noEntries")}</div>`;
     return;
   }
-  list.innerHTML = allExpenses.slice(0, 60).map(e => `
+  list.innerHTML = allExpenses.slice(0, 60).map(e => {
+    const canDelete = isAdmin() || e.person === currentPerson;
+    return `
     <div class="entry">
       <div>
-        <div class="cat">${escapeHtml(e.category)}</div>
+        <div class="cat">${escapeHtml(categoryLabel(e.category))}</div>
         <div class="meta">${e.date} · ${escapeHtml(e.person)}${e.note ? " · " + escapeHtml(e.note) : ""}</div>
         ${e.receiptUrl ? `<a href="${e.receiptUrl}" target="_blank" rel="noopener" style="font-size:0.75rem; color:var(--green); text-decoration:underline;">${t("viewReceipt")}</a>` : ""}
       </div>
       <div style="text-align:right;">
         <div class="amt">₹${Number(e.amount).toFixed(2)}</div>
-        <button class="del" onclick="deleteEntry('${e.id}')">${t("delete")}</button>
+        ${canDelete ? `<button class="del" onclick="deleteEntry('${e.id}')">${t("delete")}</button>` : ""}
       </div>
     </div>
-  `).join("");
+  `;
+  }).join("");
 }
 function deleteEntry(id){
   if(confirm(t("confirmDelete"))) expensesRef.doc(id).delete();
@@ -693,8 +805,9 @@ function renderBreakdown(tableId, rows, key){
     tbody.innerHTML = `<tr><td colspan="2" style="color:#5B6478;">${t("noEntriesPeriod")}</td></tr>`;
     return;
   }
+  const label = key === "category" ? categoryLabel : (k => k);
   tbody.innerHTML = entries.map(([k,v]) =>
-    `<tr><td>${escapeHtml(k)}</td><td class="num">₹${v.toFixed(2)}</td></tr>`
+    `<tr><td>${escapeHtml(label(k))}</td><td class="num">₹${v.toFixed(2)}</td></tr>`
   ).join("");
 }
 
@@ -724,6 +837,7 @@ if(currentPerson){
   document.getElementById("lang-select").value = currentLang; // harmless if hidden
 }
 startSync();
+startCategorySync();
 
 // register service worker for offline/installable behaviour
 if('serviceWorker' in navigator){
