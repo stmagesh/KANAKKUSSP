@@ -43,18 +43,7 @@ const ADMIN_USERS = ["Swami"];
 // Format: { en: "English name", ta: "தமிழ் பெயர்" }
 // ============================================================
 const CATEGORIES = [
-  { en: "Food",                  ta: "உணவு" },
-  { en: "Groceries",              ta: "மளிகைப் பொருட்கள்" },
-  { en: "Travel",                 ta: "பயணம்" },
-  { en: "Fuel",                   ta: "எரிபொருள்" },
-  { en: "Vehicle Maintenance",    ta: "வாகன பராமரிப்பு" },
-  { en: "Rent",                   ta: "வாடகை" },
-  { en: "Electricity Bill",       ta: "மின்சாரக் கட்டணம்" },
-  { en: "Water Bill",             ta: "தண்ணீர்க் கட்டணம்" },
-  { en: "Cooking Gas",            ta: "சமையல் எரிவாயு" },
-  { en: "Mobile / Internet",      ta: "மொபைல் / இணையம்" },
-  { en: "Medical",                ta: "மருத்துவம்" },
-  { en: "Education",              ta: "கல்வி" },
+
   { en: "Cement",                 ta: "சிமெண்ட்" },
   { en: "River Sand",             ta: "ஆற்று மணல்" },
   { en: "M-Sand",                 ta: "எம்-சாண்ட்" },
@@ -81,17 +70,6 @@ const CATEGORIES = [
   { en: "Borewell",               ta: "போர்வெல்" },
   { en: "Driver Allowance",       ta: "ஓட்டுநர் படி" },
   { en: "Tools & Equipment",      ta: "கருவிகள் & உபகரணங்கள்" },
-  { en: "Household Items",        ta: "வீட்டுப் பொருட்கள்" },
-  { en: "Clothing",               ta: "ஆடை" },
-  { en: "Entertainment",          ta: "பொழுதுபோக்கு" },
-  { en: "Festival / Religious",   ta: "திருவிழா / சமய செலவு" },
-  { en: "Gifts",                  ta: "பரிசுகள்" },
-  { en: "Donation",               ta: "நன்கொடை" },
-  { en: "Insurance",              ta: "காப்பீடு" },
-  { en: "Loan / EMI",             ta: "கடன் தவணை" },
-  { en: "Bank Charges",           ta: "வங்கி கட்டணங்கள்" },
-  { en: "Repairs & Maintenance",  ta: "பழுது பார்த்தல் & பராமரிப்பு" },
-  { en: "Miscellaneous",          ta: "பிற செலவுகள்" }
 ];
 
 // Expenses above this amount (in ₹) will require a receipt photo/PDF upload.
