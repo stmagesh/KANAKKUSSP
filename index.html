@@ -7,19 +7,19 @@
 <link rel="manifest" href="manifest.json?v=2">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2">
 <link rel="apple-touch-icon" href="icon-192.png?v=2">
-<meta name="theme-color" content="#0F3E68">
+<meta name="theme-color" content="#6B1E2A">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@400;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap');
 
   :root{
-    --paper:#FAF6EC;
-    --paper-line:#E3D9C2;
-    --ink:#0F3E68;
-    --ink-soft:#4E7495;
-    --red:#B33A3A;
-    --green:#1D7A45;
-    --brass:#C6871E;
-    --card:#FFFFFF;
+    --paper:#F7EFDC;
+    --paper-line:#E8DCC4;
+    --ink:#6B1E2A;
+    --ink-soft:#8A6F52;
+    --red:#C0392B;
+    --green:#2E9B6F;
+    --brass:#C99A3E;
+    --card:#FFFDF8;
   }
   *{box-sizing:border-box;}
   body{
@@ -33,53 +33,58 @@
     padding-bottom:70px;
   }
   .brass-rule{
-    height:6px;
-    background:linear-gradient(90deg, var(--brass), #E8CE6B 40%, var(--brass));
+    height:5px;
+    background:linear-gradient(90deg, var(--brass), #F0C878 40%, var(--brass));
   }
   header{
     background:var(--ink);
     color:var(--paper);
-    padding:14px 20px;
+    padding:16px 22px;
     position:sticky; top:0; z-index:10;
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
     gap:12px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.15);
   }
   header h1{
     font-family:'Zilla Slab',serif;
-    font-size:1.5rem;
+    font-size:1.55rem;
     margin:0;
-    letter-spacing:0.5px;
+    letter-spacing:0.4px;
   }
   header .sub{
     font-size:0.78rem;
-    color:#B9C2D8;
+    color:#DDBFAE;
     margin-top:2px;
   }
   #whoami{
     display:flex;
     flex-direction:column;
     align-items:flex-end;
-    gap:5px;
+    gap:6px;
     font-size:0.75rem;
-    color:#B9C2D8;
+    color:#DDBFAE;
     text-align:right;
     flex-shrink:0;
   }
   #whoami button{
-    background:none; border:1px solid #B9C2D8; color:#B9C2D8;
-    font-size:0.7rem; padding:3px 8px; border-radius:3px; cursor:pointer;
+    background:none; border:1px solid #DDBFAE; color:#DDBFAE;
+    font-size:0.7rem; padding:4px 10px; border-radius:20px; cursor:pointer;
+    transition:background 0.15s, color 0.15s;
   }
+  #whoami button:hover{ background:rgba(255,255,255,0.1); }
+  #whoami button:active{ transform:scale(0.96); }
   #lang-select{
-    background:var(--ink); border:1px solid #B9C2D8; color:var(--paper);
-    font-size:0.72rem; padding:3px 6px; border-radius:3px;
+    background:rgba(255,255,255,0.08); border:1px solid #DDBFAE; color:var(--paper);
+    font-size:0.72rem; padding:4px 8px; border-radius:20px; cursor:pointer;
   }
 
-  main{ max-width:640px; margin:0 auto; padding:18px 16px 30px; }
+  main{ max-width:640px; margin:0 auto; padding:20px 16px 34px; }
 
-  .screen{ display:none; }
+  .screen{ display:none; animation:fadeIn 0.18s ease; }
   .screen.active{ display:block; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
 
   /* --- LOGIN --- */
   #login-screen{
@@ -88,53 +93,62 @@
   .login-card{
     background:var(--card);
     border:1px solid var(--paper-line);
-    border-left:6px solid var(--brass);
-    border-radius:6px;
-    padding:28px 24px;
-    box-shadow:0 2px 10px rgba(27,42,74,0.08);
+    border-top:4px solid var(--brass);
+    border-radius:14px;
+    padding:32px 26px;
+    box-shadow:0 1px 3px rgba(107,30,42,0.08), 0 12px 28px rgba(107,30,42,0.12);
   }
   .login-card h2{
     font-family:'Zilla Slab',serif;
     margin:0 0 4px;
+    text-align:center;
+    font-size:1.4rem;
   }
   .brand-logo{
     display:block;
-    width:64px; height:64px;
+    width:72px; height:72px;
     border-radius:50%;
-    border:2px solid var(--brass);
+    border:3px solid var(--brass);
     object-fit:cover;
-    margin:0 auto 14px;
+    margin:0 auto 16px;
+    box-shadow:0 4px 12px rgba(107,30,42,0.18);
   }
   .header-title{
     display:flex;
     align-items:center;
-    gap:10px;
+    gap:11px;
   }
   .header-logo{
-    width:40px; height:40px;
+    width:42px; height:42px;
     border-radius:50%;
     border:2px solid var(--brass);
     object-fit:cover;
     flex-shrink:0;
+    box-shadow:0 2px 6px rgba(0,0,0,0.2);
   }
-  .login-card p.hint{ color:var(--ink-soft); font-size:0.85rem; margin-top:0; margin-bottom:20px;}
-  label{ font-size:0.8rem; font-weight:600; color:var(--ink-soft); display:block; margin-bottom:6px; }
+  .login-card p.hint{ color:var(--ink-soft); font-size:0.85rem; margin-top:0; margin-bottom:22px; text-align:center; }
+  label{ font-size:0.78rem; font-weight:600; color:var(--ink-soft); display:block; margin-bottom:6px; letter-spacing:0.2px; }
   select, input, button, textarea{
     font-family:inherit; font-size:1rem;
   }
   select#person-select, input#pin-input{
-    width:100%; padding:11px 12px; border:1px solid var(--paper-line);
-    border-radius:5px; margin-bottom:16px; background:var(--paper);
-    color:var(--ink);
+    width:100%; padding:12px 13px; border:1px solid var(--paper-line);
+    border-radius:8px; margin-bottom:16px; background:var(--paper);
+    color:var(--ink); transition:border-color 0.15s, box-shadow 0.15s;
+  }
+  select#person-select:focus, input#pin-input:focus{
+    outline:none; border-color:var(--ink); box-shadow:0 0 0 3px rgba(107,30,42,0.14);
   }
   .btn-primary{
-    width:100%; padding:13px; background:var(--ink); color:var(--paper);
-    border:none; border-radius:5px; font-weight:600; cursor:pointer; font-size:1rem;
-    letter-spacing:0.3px;
+    width:100%; padding:14px; background:var(--ink); color:var(--paper);
+    border:none; border-radius:8px; font-weight:600; cursor:pointer; font-size:1rem;
+    letter-spacing:0.3px; transition:background 0.15s, transform 0.08s, box-shadow 0.15s;
+    box-shadow:0 2px 6px rgba(107,30,42,0.25);
   }
-  .btn-primary:active{ opacity:0.85; }
-  .btn-primary:disabled{ opacity:0.6; cursor:default; }
-  #login-error{ color:var(--red); font-size:0.85rem; margin-top:10px; display:none; }
+  .btn-primary:hover{ background:#82273A; }
+  .btn-primary:active{ transform:scale(0.98); box-shadow:0 1px 3px rgba(107,30,42,0.25); }
+  .btn-primary:disabled{ opacity:0.6; cursor:default; transform:none; }
+  #login-error{ color:var(--red); font-size:0.85rem; margin-top:10px; display:none; text-align:center; }
 
   /* --- TABS --- */
   .tabbar{
@@ -142,26 +156,34 @@
     background:var(--card);
     border-top:1px solid var(--paper-line);
     display:flex; z-index:10;
+    box-shadow:0 -2px 10px rgba(0,0,0,0.06);
   }
   .tabbar button{
-    flex:1; padding:12px 4px 10px; background:none; border:none;
+    flex:1; padding:11px 4px 9px; background:none; border:none;
     font-family:'Inter',sans-serif; font-size:0.72rem; color:var(--ink-soft);
-    cursor:pointer; font-weight:600;
+    cursor:pointer; font-weight:600; transition:color 0.15s;
   }
-  .tabbar button .ic{ display:block; font-size:1.15rem; margin-bottom:2px; }
+  .tabbar button .ic{ display:block; margin:0 auto 3px; transition:transform 0.15s; }
+  .tabbar button .ic svg{ width:21px; height:21px; }
   .tabbar button.active{ color:var(--ink); }
-  .tabbar button.active .ic{ color:var(--brass); }
+  .tabbar button.active .ic{ color:var(--brass); transform:translateY(-1px); }
+  .tabbar button:active{ transform:scale(0.95); }
 
   /* --- CARD --- */
   .card{
-    background:var(--card); border:1px solid var(--paper-line); border-radius:6px;
-    padding:18px; margin-bottom:16px; box-shadow:0 1px 4px rgba(27,42,74,0.05);
+    background:var(--card); border:1px solid var(--paper-line); border-radius:12px;
+    padding:20px; margin-bottom:16px;
+    box-shadow:0 1px 2px rgba(107,30,42,0.05), 0 6px 16px rgba(107,30,42,0.06);
   }
-  .card h3{ font-family:'Zilla Slab',serif; margin:0 0 14px; font-size:1.15rem; }
+  .card h3{ font-family:'Zilla Slab',serif; margin:0 0 16px; font-size:1.18rem; color:var(--ink); }
 
   input[type=date], input[type=number], input[type=text], select.field{
-    width:100%; padding:11px 12px; border:1px solid var(--paper-line);
-    border-radius:5px; margin-bottom:14px; background:var(--paper); color:var(--ink);
+    width:100%; padding:12px 13px; border:1px solid var(--paper-line);
+    border-radius:8px; margin-bottom:14px; background:var(--paper); color:var(--ink);
+    transition:border-color 0.15s, box-shadow 0.15s;
+  }
+  input[type=date]:focus, input[type=number]:focus, input[type=text]:focus, select.field:focus{
+    outline:none; border-color:var(--ink); box-shadow:0 0 0 3px rgba(107,30,42,0.14);
   }
   .amount-field{ font-family:'IBM Plex Mono',monospace; font-weight:600; }
   .row2{ display:flex; gap:10px; }
@@ -170,43 +192,50 @@
   /* --- ENTRIES LIST --- */
   .entry{
     display:flex; justify-content:space-between; align-items:center;
-    padding:12px 0; border-bottom:1px dashed var(--paper-line);
+    padding:13px 0; border-bottom:1px dashed var(--paper-line);
+    transition:background 0.12s;
   }
   .entry:last-child{ border-bottom:none; }
   .entry .meta{ font-size:0.78rem; color:var(--ink-soft); }
-  .entry .cat{ font-weight:600; font-size:0.92rem; }
-  .entry .amt{ font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--red); font-size:1rem; }
-  .entry .del{ background:none; border:none; color:var(--ink-soft); font-size:0.7rem; cursor:pointer; margin-left:10px; text-decoration:underline; }
-  .empty-note{ color:var(--ink-soft); font-size:0.88rem; text-align:center; padding:20px 0; }
+  .entry .cat{ font-weight:600; font-size:0.94rem; color:var(--ink); }
+  .entry .amt{ font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--red); font-size:1.02rem; }
+  .entry .del{ background:none; border:none; color:var(--ink-soft); font-size:0.7rem; cursor:pointer; margin-left:10px; text-decoration:underline; transition:color 0.15s; }
+  .entry .del:hover{ color:var(--red); }
+  .empty-note{ color:var(--ink-soft); font-size:0.88rem; text-align:center; padding:24px 0; }
 
   /* --- REPORTS --- */
   .period-toggle{ display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
   .period-toggle button{
     flex:1; min-width:70px; padding:9px 4px; border:1px solid var(--paper-line);
-    background:var(--paper); border-radius:5px; font-size:0.78rem; font-weight:600;
-    color:var(--ink-soft); cursor:pointer;
+    background:var(--paper); border-radius:20px; font-size:0.78rem; font-weight:600;
+    color:var(--ink-soft); cursor:pointer; transition:background 0.15s, color 0.15s, border-color 0.15s;
   }
   .period-toggle button.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .period-toggle button:active{ transform:scale(0.97); }
 
   .total-banner{
-    background:var(--ink); color:var(--paper); border-radius:6px; padding:18px;
-    text-align:center; margin-bottom:16px;
+    background:var(--ink); color:var(--paper); border-radius:12px; padding:20px;
+    text-align:center; margin-bottom:18px;
+    box-shadow:0 4px 14px rgba(107,30,42,0.22);
   }
-  .total-banner .label{ font-size:0.75rem; color:#B9C2D8; text-transform:uppercase; letter-spacing:1px; }
-  .total-banner .value{ font-family:'IBM Plex Mono',monospace; font-size:1.9rem; font-weight:600; margin-top:4px; }
+  .total-banner .label{ font-size:0.75rem; color:#DDBFAE; text-transform:uppercase; letter-spacing:1.2px; }
+  .total-banner .value{ font-family:'IBM Plex Mono',monospace; font-size:2rem; font-weight:600; margin-top:5px; }
 
   table.breakdown{ width:100%; border-collapse:collapse; font-size:0.88rem; }
   table.breakdown th{ text-align:left; color:var(--ink-soft); font-weight:600; font-size:0.72rem;
     text-transform:uppercase; letter-spacing:0.5px; padding-bottom:8px; border-bottom:1px solid var(--paper-line); }
-  table.breakdown td{ padding:8px 0; border-bottom:1px dashed var(--paper-line); }
-  table.breakdown td.num{ font-family:'IBM Plex Mono',monospace; text-align:right; }
+  table.breakdown td{ padding:9px 0; border-bottom:1px dashed var(--paper-line); }
+  table.breakdown td.num{ font-family:'IBM Plex Mono',monospace; text-align:right; font-weight:600; }
 
   .export-btn{
-    width:100%; padding:11px; background:var(--paper); border:1px solid var(--ink);
-    color:var(--ink); border-radius:5px; font-weight:600; cursor:pointer; margin-top:6px;
+    width:100%; padding:12px; background:var(--paper); border:1px solid var(--ink);
+    color:var(--ink); border-radius:8px; font-weight:600; cursor:pointer; margin-top:8px;
+    transition:background 0.15s, transform 0.08s;
   }
+  .export-btn:hover{ background:#EFE9D8; }
+  .export-btn:active{ transform:scale(0.98); }
 
-  h4.section-label{ font-family:'Zilla Slab',serif; font-size:0.98rem; margin:18px 0 8px; }
+  h4.section-label{ font-family:'Zilla Slab',serif; font-size:1rem; margin:20px 0 10px; color:var(--ink); }
 </style>
 </head>
 <body>
@@ -256,14 +285,14 @@
         <input type="date" id="f-date">
         <label data-i18n="category">Category</label>
         <select class="field" id="f-category"></select>
-        <div id="new-category-wrap" style="display:none; background:var(--paper); border:1px dashed var(--brass); border-radius:5px; padding:12px; margin:-6px 0 14px;">
+        <div id="new-category-wrap" style="display:none; background:var(--paper); border:1px dashed var(--brass); border-radius:8px; padding:12px; margin:-6px 0 14px;">
           <label data-i18n="newCategoryEn" style="margin-bottom:4px;">Category name (English)</label>
           <input type="text" id="new-cat-en" style="margin-bottom:10px;">
           <label data-i18n="newCategoryTa" style="margin-bottom:4px;">Category name (Tamil) — optional</label>
           <input type="text" id="new-cat-ta" style="margin-bottom:10px;">
           <div style="display:flex; gap:8px;">
-            <button type="button" onclick="addNewCategory()" data-i18n="addCategoryBtn" style="flex:1; padding:9px; background:var(--ink); color:var(--paper); border:none; border-radius:5px; font-weight:600; cursor:pointer;">Add category</button>
-            <button type="button" onclick="cancelNewCategory()" data-i18n="cancel" style="flex:1; padding:9px; background:var(--card); color:var(--ink-soft); border:1px solid var(--paper-line); border-radius:5px; font-weight:600; cursor:pointer;">Cancel</button>
+            <button type="button" onclick="addNewCategory()" data-i18n="addCategoryBtn" style="flex:1; padding:9px; background:var(--ink); color:var(--paper); border:none; border-radius:8px; font-weight:600; cursor:pointer;">Add category</button>
+            <button type="button" onclick="cancelNewCategory()" data-i18n="cancel" style="flex:1; padding:9px; background:var(--card); color:var(--ink-soft); border:1px solid var(--paper-line); border-radius:8px; font-weight:600; cursor:pointer;">Cancel</button>
           </div>
         </div>
         <label data-i18n="amount">Amount (₹)</label>
@@ -315,13 +344,13 @@
 
   <div class="tabbar">
     <button class="tab-btn active" data-screen="screen-add" onclick="switchTab('screen-add', this)">
-      <span class="ic">＋</span><span data-i18n="tabAdd">Add</span>
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span><span data-i18n="tabAdd">Add</span>
     </button>
     <button class="tab-btn" data-screen="screen-entries" onclick="switchTab('screen-entries', this)">
-      <span class="ic">☰</span><span data-i18n="tabEntries">Entries</span>
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/></svg></span><span data-i18n="tabEntries">Entries</span>
     </button>
     <button class="tab-btn" data-screen="screen-reports" onclick="switchTab('screen-reports', this)">
-      <span class="ic">▤</span><span data-i18n="tabReports">Reports</span>
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="7"/><line x1="19" y1="20" x2="19" y2="15"/></svg></span><span data-i18n="tabReports">Reports</span>
     </button>
   </div>
 </div>

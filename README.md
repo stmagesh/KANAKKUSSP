@@ -141,6 +141,16 @@ a URL like `https://yourname.github.io/kanakku`.
    PDFs upload as-is; keep them under ~8MB.
 
 ## Notes
+- **Visual polish pass** — cards now have soft layered shadows instead of flat
+  borders, buttons and inputs have proper hover/press feedback and focus
+  rings, tab bar icons are clean line-icons instead of plain text characters,
+  and corners are more rounded throughout for a softer, more modern feel.
+  Purely cosmetic — no functional changes.
+- **"Warm ledger" color theme** — deep oxblood/maroon header and buttons,
+  warm gold accent line, warm parchment background, replacing the earlier
+  teal theme. Colors are set once, near the top of `index.html`, under
+  `:root{ ... }` — change the hex values there if you ever want to adjust it
+  further.
 - **Your logo now appears in the app itself** — on the login screen and in
   the header next to "Kanakku" — not just as the install/home-screen icon.
   It's pulled from `icon-192.png`, so if you ever update your logo, replacing
