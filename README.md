@@ -145,6 +145,12 @@ a URL like `https://yourname.github.io/kanakku`.
   the header next to "Kanakku" — not just as the install/home-screen icon.
   It's pulled from `icon-192.png`, so if you ever update your logo, replacing
   that one file updates it everywhere at once.
+- **App colors now match your SSP Infra Groups logo** — the deep blue from
+  the logo replaces the old navy header/accent color, and the gold ring and
+  green from the logo replace the previous brass/green accents throughout
+  (buttons, header, totals banner, "View receipt" links). The colors are set
+  once, near the top of `index.html`, under `:root{ ... }` — change the hex
+  values there if you ever want to adjust the palette.
 - Fortnightly reports split each month into 1st–15th and 16th–end.
 - **Categories are bilingual and shared live.** `firebase-config.js` seeds a
   starting list of ~26 common categories in English + Tamil. From inside the
