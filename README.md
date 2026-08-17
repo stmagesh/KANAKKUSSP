@@ -115,9 +115,12 @@ a URL like `https://yourname.github.io/kanakku`.
   in `index.html` if you ever want it longer or shorter.
 - **Reports** tab — set an anchor date, and all four totals (Daily,
   Fortnightly, Monthly, Yearly) show at once in a grid, each relative to that
-  date. Tap any of the four to see its category and person breakdown below,
-  and export that period as a CSV (opens fine in Excel) — the exported file
-  ends with a **TOTAL** row summing the Amount column.
+  date. A **Person** filter above the grid narrows every total, breakdown, and
+  CSV export to just one person's expenses — set it back to "All people" to
+  see everyone combined again. Tap any of the four totals to see its category
+  and person breakdown below, and export that period as a CSV (opens fine in
+  Excel) — the exported file ends with a **TOTAL** row summing the Amount
+  column.
 
 ## Enabling receipt uploads later
 1. In Firebase Console → Storage, click **Upgrade project** and link a

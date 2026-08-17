@@ -323,6 +323,8 @@
         <h3 data-i18n="reports">Reports</h3>
         <label data-i18n="anchorDate">Anchor date</label>
         <input type="date" id="report-date">
+        <label data-i18n="filterByPerson">Person</label>
+        <select class="field" id="report-person-filter"></select>
 
         <div class="total-grid" id="total-grid">
           <button type="button" class="mini-banner active" data-period="daily">
@@ -421,6 +423,7 @@ const TRANSLATIONS = {
     reports: "Reports",
     periodDaily: "Daily", periodFortnight: "Fortnight", periodMonthly: "Monthly", periodYearly: "Yearly",
     anchorDate: "Anchor date", byCategory: "By category", byPerson: "By person",
+    filterByPerson: "Person", allPeople: "All people",
     colCategory: "Category", colPerson: "Person", colAmount: "Amount",
     noEntriesPeriod: "No entries in this period",
     exportCsv: "Export this period as CSV",
@@ -466,6 +469,7 @@ const TRANSLATIONS = {
     reports: "அறிக்கைகள்",
     periodDaily: "தினசரி", periodFortnight: "பதினைந்து நாள்", periodMonthly: "மாதம்", periodYearly: "ஆண்டு",
     anchorDate: "தேதியைத் தேர்ந்தெடு", byCategory: "வகை வாரியாக", byPerson: "நபர் வாரியாக",
+    filterByPerson: "நபர்", allPeople: "அனைவரும்",
     colCategory: "வகை", colPerson: "நபர்", colAmount: "தொகை",
     noEntriesPeriod: "இந்தக் காலத்தில் பதிவுகள் இல்லை",
     exportCsv: "இந்த அறிக்கையை CSV ஆக ஏற்றுமதி செய்",
@@ -499,6 +503,7 @@ function applyLanguage(){
     document.getElementById("whoami-name").textContent = currentPerson + (isAdmin() ? ` · ${t("adminBadge")}` : "");
   }
   renderCategoryDropdown();
+  populatePersonFilter();
   renderEntries();
   if(document.getElementById("screen-reports").classList.contains("active")) renderReport();
 }
@@ -839,8 +844,16 @@ function escapeHtml(s){
 }
 
 // ---------- REPORTS ----------
+function populatePersonFilter(){
+  const sel = document.getElementById("report-person-filter");
+  const prev = sel.value || "all";
+  sel.innerHTML = `<option value="all">${escapeHtml(t("allPeople"))}</option>` +
+    Object.keys(PEOPLE_PINS).map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join("");
+  sel.value = prev;
+}
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("report-date").value = todayISO();
+  populatePersonFilter();
   document.querySelectorAll("#total-grid .mini-banner").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll("#total-grid .mini-banner").forEach(b => b.classList.remove("active"));
@@ -850,6 +863,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
   document.getElementById("report-date").addEventListener("change", renderReport);
+  document.getElementById("report-person-filter").addEventListener("change", renderReport);
 });
 
 function getRange(period, anchorISO){
@@ -898,24 +912,26 @@ function shortRangeLabel(period, start, end){
 
 function renderReport(){
   const anchorISO = document.getElementById("report-date").value || todayISO();
+  const personFilter = document.getElementById("report-person-filter").value || "all";
+  const baseExpenses = personFilter === "all" ? allExpenses : allExpenses.filter(e => e.person === personFilter);
   const periods = ["daily", "fortnightly", "monthly", "yearly"];
   let activeLabel = "";
 
   periods.forEach(p => {
     const { start, end, label } = getRange(p, anchorISO);
     const startStr = isoOf(start), endStr = isoOf(end);
-    const rows = allExpenses.filter(e => e.date >= startStr && e.date <= endStr);
+    const rows = baseExpenses.filter(e => e.date >= startStr && e.date <= endStr);
     const total = rows.reduce((s,e) => s + Number(e.amount), 0);
 
     document.getElementById("total-" + p).textContent = "₹" + total.toFixed(2);
     document.getElementById("range-" + p).textContent = shortRangeLabel(p, start, end);
 
     if(p === currentPeriod){
-      activeLabel = label;
+      activeLabel = label + (personFilter !== "all" ? ` · ${personFilter}` : "");
       renderBreakdown("cat-breakdown", rows, "category");
       renderBreakdown("person-breakdown", rows, "person");
       window._lastReportRows = rows; // for CSV export
-      window._lastReportLabel = label;
+      window._lastReportLabel = activeLabel;
     }
   });
 
