@@ -113,9 +113,11 @@ a URL like `https://yourname.github.io/kanakku`.
   someone walking away from an unlocked phone while still logged in. The
   5-minute window is set by `INACTIVITY_LIMIT_MS` near the top of the script
   in `index.html` if you ever want it longer or shorter.
-- **Reports** tab — pick Daily / Fortnightly / Monthly / Yearly and an anchor
-  date; see the total plus breakdowns by category and by person; export the
-  period as a CSV (opens fine in Excel).
+- **Reports** tab — set an anchor date, and all four totals (Daily,
+  Fortnightly, Monthly, Yearly) show at once in a grid, each relative to that
+  date. Tap any of the four to see its category and person breakdown below,
+  and export that period as a CSV (opens fine in Excel) — the exported file
+  ends with a **TOTAL** row summing the Amount column.
 
 ## Enabling receipt uploads later
 1. In Firebase Console → Storage, click **Upgrade project** and link a

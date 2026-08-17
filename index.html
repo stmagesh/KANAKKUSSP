@@ -204,22 +204,22 @@
   .empty-note{ color:var(--ink-soft); font-size:0.88rem; text-align:center; padding:24px 0; }
 
   /* --- REPORTS --- */
-  .period-toggle{ display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
-  .period-toggle button{
-    flex:1; min-width:70px; padding:9px 4px; border:1px solid var(--paper-line);
-    background:var(--paper); border-radius:20px; font-size:0.78rem; font-weight:600;
-    color:var(--ink-soft); cursor:pointer; transition:background 0.15s, color 0.15s, border-color 0.15s;
+  .total-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px;
+    margin:14px 0 10px;
   }
-  .period-toggle button.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
-  .period-toggle button:active{ transform:scale(0.97); }
-
-  .total-banner{
-    background:var(--ink); color:var(--paper); border-radius:12px; padding:20px;
-    text-align:center; margin-bottom:18px;
-    box-shadow:0 4px 14px rgba(107,30,42,0.22);
+  .mini-banner{
+    background:var(--ink); color:var(--paper); border:2px solid transparent;
+    border-radius:12px; padding:14px 10px; text-align:center; cursor:pointer;
+    font-family:inherit; transition:transform 0.1s, box-shadow 0.15s, border-color 0.15s;
+    box-shadow:0 2px 8px rgba(107,30,42,0.18);
   }
-  .total-banner .label{ font-size:0.75rem; color:#DDBFAE; text-transform:uppercase; letter-spacing:1.2px; }
-  .total-banner .value{ font-family:'IBM Plex Mono',monospace; font-size:2rem; font-weight:600; margin-top:5px; }
+  .mini-banner:active{ transform:scale(0.97); }
+  .mini-banner.active{ border-color:var(--brass); box-shadow:0 4px 14px rgba(107,30,42,0.3); }
+  .mini-label{ font-size:0.7rem; color:#DDBFAE; text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+  .mini-range{ font-size:0.68rem; color:#DDBFAE; margin-top:2px; min-height:1em; }
+  .mini-value{ font-family:'IBM Plex Mono',monospace; font-size:1.3rem; font-weight:600; margin-top:5px; }
+  .breakdown-hint{ font-size:0.78rem; color:var(--ink-soft); text-align:center; margin-bottom:6px; }
 
   table.breakdown{ width:100%; border-collapse:collapse; font-size:0.88rem; }
   table.breakdown th{ text-align:left; color:var(--ink-soft); font-weight:600; font-size:0.72rem;
@@ -321,18 +321,33 @@
     <div class="screen" id="screen-reports">
       <div class="card">
         <h3 data-i18n="reports">Reports</h3>
-        <div class="period-toggle" id="period-toggle">
-          <button data-period="daily" class="active" data-i18n="periodDaily">Daily</button>
-          <button data-period="fortnightly" data-i18n="periodFortnight">Fortnight</button>
-          <button data-period="monthly" data-i18n="periodMonthly">Monthly</button>
-          <button data-period="yearly" data-i18n="periodYearly">Yearly</button>
-        </div>
         <label data-i18n="anchorDate">Anchor date</label>
         <input type="date" id="report-date">
-        <div class="total-banner">
-          <div class="label" id="report-range-label" data-i18n="today">Today</div>
-          <div class="value" id="report-total">₹0</div>
+
+        <div class="total-grid" id="total-grid">
+          <button type="button" class="mini-banner active" data-period="daily">
+            <div class="mini-label" data-i18n="periodDaily">Daily</div>
+            <div class="mini-range" id="range-daily"></div>
+            <div class="mini-value" id="total-daily">₹0</div>
+          </button>
+          <button type="button" class="mini-banner" data-period="fortnightly">
+            <div class="mini-label" data-i18n="periodFortnight">Fortnight</div>
+            <div class="mini-range" id="range-fortnightly"></div>
+            <div class="mini-value" id="total-fortnightly">₹0</div>
+          </button>
+          <button type="button" class="mini-banner" data-period="monthly">
+            <div class="mini-label" data-i18n="periodMonthly">Monthly</div>
+            <div class="mini-range" id="range-monthly"></div>
+            <div class="mini-value" id="total-monthly">₹0</div>
+          </button>
+          <button type="button" class="mini-banner" data-period="yearly">
+            <div class="mini-label" data-i18n="periodYearly">Yearly</div>
+            <div class="mini-range" id="range-yearly"></div>
+            <div class="mini-value" id="total-yearly">₹0</div>
+          </button>
         </div>
+        <div class="breakdown-hint" id="breakdown-hint"></div>
+
         <h4 class="section-label" data-i18n="byCategory">By category</h4>
         <table class="breakdown" id="cat-breakdown"><thead><tr><th data-i18n="colCategory">Category</th><th class="num" data-i18n="colAmount">Amount</th></tr></thead><tbody></tbody></table>
         <h4 class="section-label" data-i18n="byPerson">By person</h4>
@@ -826,9 +841,9 @@ function escapeHtml(s){
 // ---------- REPORTS ----------
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("report-date").value = todayISO();
-  document.querySelectorAll("#period-toggle button").forEach(btn => {
+  document.querySelectorAll("#total-grid .mini-banner").forEach(btn => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll("#period-toggle button").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll("#total-grid .mini-banner").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       currentPeriod = btn.dataset.period;
       renderReport();
@@ -867,22 +882,44 @@ function getRange(period, anchorISO){
   return { start, end, label };
 }
 
+function shortRangeLabel(period, start, end){
+  const locale = currentLang === "ta" ? "ta-IN" : "en-IN";
+  if(period === "daily"){
+    return start.toLocaleDateString(locale, { day: "numeric", month: "short" });
+  }
+  if(period === "fortnightly"){
+    return `${start.getDate()}–${end.getDate()} ${start.toLocaleDateString(locale, { month: "short" })}`;
+  }
+  if(period === "monthly"){
+    return start.toLocaleDateString(locale, { month: "short", year: "numeric" });
+  }
+  return String(start.getFullYear());
+}
+
 function renderReport(){
   const anchorISO = document.getElementById("report-date").value || todayISO();
-  const { start, end, label } = getRange(currentPeriod, anchorISO);
-  const startStr = isoOf(start), endStr = isoOf(end);
+  const periods = ["daily", "fortnightly", "monthly", "yearly"];
+  let activeLabel = "";
 
-  const filtered = allExpenses.filter(e => e.date >= startStr && e.date <= endStr);
-  const total = filtered.reduce((s,e) => s + Number(e.amount), 0);
+  periods.forEach(p => {
+    const { start, end, label } = getRange(p, anchorISO);
+    const startStr = isoOf(start), endStr = isoOf(end);
+    const rows = allExpenses.filter(e => e.date >= startStr && e.date <= endStr);
+    const total = rows.reduce((s,e) => s + Number(e.amount), 0);
 
-  document.getElementById("report-range-label").textContent = label;
-  document.getElementById("report-total").textContent = "₹" + total.toFixed(2);
+    document.getElementById("total-" + p).textContent = "₹" + total.toFixed(2);
+    document.getElementById("range-" + p).textContent = shortRangeLabel(p, start, end);
 
-  renderBreakdown("cat-breakdown", filtered, "category");
-  renderBreakdown("person-breakdown", filtered, "person");
+    if(p === currentPeriod){
+      activeLabel = label;
+      renderBreakdown("cat-breakdown", rows, "category");
+      renderBreakdown("person-breakdown", rows, "person");
+      window._lastReportRows = rows; // for CSV export
+      window._lastReportLabel = label;
+    }
+  });
 
-  window._lastReportRows = filtered; // for CSV export
-  window._lastReportLabel = label;
+  document.getElementById("breakdown-hint").textContent = activeLabel;
 }
 function isoOf(d){ return d.toISOString().slice(0,10); }
 
@@ -908,6 +945,8 @@ function exportCSV(){
   rows.forEach(e => {
     csv += `${e.date},"${(e.person||"").replace(/"/g,'""')}","${(e.category||"").replace(/"/g,'""')}",${e.amount},"${(e.note||"").replace(/"/g,'""')}"\n`;
   });
+  const total = rows.reduce((s,e) => s + Number(e.amount), 0);
+  csv += `,,TOTAL,${total.toFixed(2)},\n`;
   const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
