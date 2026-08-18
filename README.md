@@ -111,6 +111,12 @@ a URL like `https://yourname.github.io/kanakku`.
   fully logs out: clears the cached app data and reloads the page, so the
   next person always lands on a clean login screen and the Add tab — never
   stuck on whatever screen the previous person left open.
+- **No persisted login, ever.** Closing the tab, closing the browser,
+  reopening the app later, or even just refreshing the page — every single
+  visit always starts at the PIN screen. Nothing about who was logged in is
+  saved anywhere (not even briefly), so there's no "still logged in from
+  last time" gap to worry about. Logout and the 5-minute auto-logout below
+  still exist for while a session is actively open.
 - **Auto-logout after 5 minutes idle** — if the app is left open with no
   taps, scrolls, or typing for 5 minutes, it automatically logs out (same
   full cleanup as manual logout) and shows a short message. Protects against
@@ -120,13 +126,17 @@ a URL like `https://yourname.github.io/kanakku`.
 - **Reports** tab — set an anchor date, and all four totals (Daily,
   Fortnightly, Monthly, Yearly) show at once in a grid, each relative to that
   date. A **Person** filter above the grid narrows every total, breakdown, and
-  CSV export to just one person's expenses — set it back to "All people" to
-  see everyone combined again. Tap any of the four totals to see its category
-  and person breakdown below, and export that period as a CSV (opens fine in
-  Excel) — the exported file ends with a **TOTAL** row summing the Amount
-  column. **"+ Custom date range"** below the grid lets you pick any From/To
-  dates instead of a fixed period — tap **Show total** and the breakdown and
-  CSV switch to that exact range.
+  export to just one person's expenses — set it back to "All people" to see
+  everyone combined again. Tap any of the four totals to see its category and
+  person breakdown below. **"+ Custom date range"** below the grid lets you
+  pick any From/To dates instead of a fixed period — tap **Show total** and
+  the breakdown and export switch to that exact range.
+- **Export is now a properly formatted Excel file (.xlsx)**, not a plain CSV
+  — bold maroon header row, alternating row shading, a bold TOTAL row with a
+  top border, frozen header row (stays visible while scrolling), sensible
+  column widths, and every amount — including each row, not just the total —
+  shown with the ₹ symbol and exactly 2 decimal places. Opens directly in
+  Excel, Google Sheets, or LibreOffice with all the formatting intact.
 
 ## Enabling receipt uploads later
 1. In Firebase Console → Storage, click **Upgrade project** and link a
@@ -156,6 +166,10 @@ a URL like `https://yourname.github.io/kanakku`.
   report date ranges through UTC time, which silently shifted them back a day
   for India's timezone (UTC+5:30) — so "today" in the report didn't match
   today's entries. This is now fixed; all reports use local dates throughout.
+- **Fixed: staying logged in after closing the app.** Login used to be
+  remembered across visits (via the browser's local storage), which meant
+  reopening the app could skip the PIN screen. That's now removed entirely —
+  see "No persisted login, ever" above.
 - **Visual polish pass** — cards now have soft layered shadows instead of flat
   borders, buttons and inputs have proper hover/press feedback and focus
   rings, tab bar icons are clean line-icons instead of plain text characters,

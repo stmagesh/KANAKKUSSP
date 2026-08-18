@@ -372,7 +372,7 @@
         <table class="breakdown" id="cat-breakdown"><thead><tr><th data-i18n="colCategory">Category</th><th class="num" data-i18n="colAmount">Amount</th></tr></thead><tbody></tbody></table>
         <h4 class="section-label" data-i18n="byPerson">By person</h4>
         <table class="breakdown" id="person-breakdown"><thead><tr><th data-i18n="colPerson">Person</th><th class="num" data-i18n="colAmount">Amount</th></tr></thead><tbody></tbody></table>
-        <button class="export-btn" onclick="exportCSV()" data-i18n="exportCsv">Export this period as CSV</button>
+        <button class="export-btn" onclick="exportExcel()" data-i18n="exportCsv">Export this period as Excel</button>
       </div>
     </div>
   </main>
@@ -393,6 +393,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="firebase-config.js"></script>
 <script>
 firebase.initializeApp(firebaseConfig);
@@ -406,7 +407,10 @@ const RECEIPT_THRESHOLD = (typeof RECEIPT_REQUIRED_ABOVE !== "undefined") ? RECE
 const RECEIPT_ENABLED = (typeof RECEIPT_UPLOAD_ENABLED !== "undefined") ? RECEIPT_UPLOAD_ENABLED : true;
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB safety cap after compression
 
-let currentPerson = localStorage.getItem("kanakku_person") || null;
+// No persisted login: currentPerson always starts null so every visit — a
+// fresh open, a reload, or reopening a previously-closed tab — requires the
+// PIN screen again. Nothing about "who's logged in" is ever saved to storage.
+let currentPerson = null;
 let allExpenses = []; // live cache from Firestore
 let currentPeriod = "daily";
 
@@ -450,7 +454,7 @@ const TRANSLATIONS = {
     invalidRange: "Please pick a valid From and To date (From must be on or before To).",
     colCategory: "Category", colPerson: "Person", colAmount: "Amount",
     noEntriesPeriod: "No entries in this period",
-    exportCsv: "Export this period as CSV",
+    exportCsv: "Export this period as Excel",
     validDateAmount: "Please enter a valid date and amount.",
     receiptRequiredAlert: (n) => `A receipt photo is required for expenses over ₹${n}.`,
     fileTooLarge: "That file is too large even after compression. Please choose a smaller photo or PDF.",
@@ -502,7 +506,7 @@ const TRANSLATIONS = {
     invalidRange: "சரியான தொடக்க மற்றும் முடிவு தேதியை தேர்ந்தெடுக்கவும் (தொடக்கம் முடிவுக்கு முன் இருக்க வேண்டும்).",
     colCategory: "வகை", colPerson: "நபர்", colAmount: "தொகை",
     noEntriesPeriod: "இந்தக் காலத்தில் பதிவுகள் இல்லை",
-    exportCsv: "இந்த அறிக்கையை CSV ஆக ஏற்றுமதி செய்",
+    exportCsv: "இந்த அறிக்கையை Excel ஆக ஏற்றுமதி செய்",
     validDateAmount: "சரியான தேதியையும் தொகையையும் உள்ளிடவும்.",
     receiptRequiredAlert: (n) => `₹${n}க்கு மேற்பட்ட செலவுகளுக்கு ரசீது புகைப்படம் அவசியம்.`,
     fileTooLarge: "சுருக்கிய பின்னும் இந்தக் கோப்பு மிகப் பெரியது. சிறிய புகைப்படம் அல்லது PDF தேர்ந்தெடுக்கவும்.",
@@ -557,7 +561,6 @@ function doLogin(){
   }
   document.getElementById("login-error").style.display = "none";
   currentPerson = person;
-  localStorage.setItem("kanakku_person", person);
   enterApp();
 }
 async function clearCachedAppShell(){
@@ -575,7 +578,6 @@ async function clearCachedAppShell(){
 async function doLogout(){
   if(!confirm(t("confirmLogout"))) return;
   clearTimeout(inactivityTimer);
-  localStorage.removeItem("kanakku_person");
   currentPerson = null;
   // Clear any cached app shell so the next login always starts fresh —
   // on the Add screen, not whatever tab/report was open before logging out.
@@ -593,7 +595,6 @@ function resetInactivityTimer(){
 }
 async function autoLogout(){
   if(!currentPerson) return;
-  localStorage.removeItem("kanakku_person");
   currentPerson = null;
   await clearCachedAppShell();
   alert(t("autoLogoutMessage"));
@@ -1070,20 +1071,79 @@ function renderBreakdown(tableId, rows, key){
   ).join("");
 }
 
-function exportCSV(){
+async function exportExcel(){
   const rows = window._lastReportRows || [];
   if(rows.length === 0){ alert(t("noExport")); return; }
-  let csv = "Date,Person,Category,Amount,Note\n";
-  rows.forEach(e => {
-    csv += `${e.date},"${(e.person||"").replace(/"/g,'""')}","${(e.category||"").replace(/"/g,'""')}",${e.amount},"${(e.note||"").replace(/"/g,'""')}"\n`;
+
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "Kanakku";
+  workbook.created = new Date();
+  const sheet = workbook.addWorksheet("Report");
+
+  sheet.mergeCells("A1:E1");
+  const titleCell = sheet.getCell("A1");
+  titleCell.value = "Kanakku — Expense Report";
+  titleCell.font = { bold: true, size: 15, color: { argb: "FF6B1E2A" } };
+  sheet.getRow(1).height = 24;
+
+  sheet.mergeCells("A2:E2");
+  const subCell = sheet.getCell("A2");
+  subCell.value = window._lastReportLabel || "";
+  subCell.font = { italic: true, size: 11, color: { argb: "FF8A6F52" } };
+
+  sheet.addRow([]); // spacer
+
+  const headers = ["Date", "Person", "Category", "Amount (₹)", "Note"];
+  const headerRow = sheet.addRow(headers);
+  headerRow.eachCell(cell => {
+    cell.font = { bold: true, color: { argb: "FFFFFDF8" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF6B1E2A" } };
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+    cell.border = { bottom: { style: "thin", color: { argb: "FFC99A3E" } } };
   });
+  headerRow.height = 20;
+
+  rows.forEach((e, i) => {
+    const r = sheet.addRow([
+      e.date,
+      e.person || "",
+      categoryLabel(e.category),
+      Number(e.amount),
+      e.note || ""
+    ]);
+    r.getCell(4).numFmt = '"₹"#,##0.00';
+    r.getCell(4).alignment = { horizontal: "right" };
+    if(i % 2 === 1){
+      r.eachCell(cell => {
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF7EFDC" } };
+      });
+    }
+    r.eachCell(cell => {
+      cell.border = { bottom: { style: "hair", color: { argb: "FFE8DCC4" } } };
+    });
+  });
+
   const total = rows.reduce((s,e) => s + Number(e.amount), 0);
-  csv += `,,TOTAL,${total.toFixed(2)},\n`;
-  const blob = new Blob([csv], { type: "text/csv" });
+  const totalRow = sheet.addRow(["", "", "TOTAL", total, ""]);
+  totalRow.eachCell(cell => {
+    cell.font = { bold: true, color: { argb: "FF6B1E2A" } };
+    cell.border = { top: { style: "medium", color: { argb: "FF6B1E2A" } } };
+  });
+  totalRow.getCell(4).numFmt = '"₹"#,##0.00';
+  totalRow.getCell(4).alignment = { horizontal: "right" };
+  totalRow.getCell(3).alignment = { horizontal: "right" };
+
+  sheet.columns = [
+    { width: 13 }, { width: 15 }, { width: 24 }, { width: 15 }, { width: 30 }
+  ];
+  sheet.views = [{ state: "frozen", ySplit: 4 }]; // header stays visible while scrolling
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `kanakku-${(window._lastReportLabel||"report").replace(/\s+/g,'-')}.csv`;
+  a.download = `kanakku-${(window._lastReportLabel || "report").replace(/\s+/g, "-")}.xlsx`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -1092,11 +1152,9 @@ function exportCSV(){
 populateLogin();
 populateForm();
 toggleReceiptField();
-if(currentPerson){
-  enterApp();
-} else {
-  document.getElementById("lang-select").value = currentLang; // harmless if hidden
-}
+// currentPerson is always null at this point (never persisted) — the login
+// screen is what's already showing by default in the HTML, so there's
+// nothing to auto-resume here.
 startSync();
 startCategorySync();
 
