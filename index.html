@@ -281,6 +281,10 @@
     <div class="screen active" id="screen-add">
       <div class="card">
         <h3 data-i18n="newEntry">New Entry</h3>
+        <div id="edit-banner" style="display:none; background:var(--paper); border:1px dashed var(--brass); border-radius:8px; padding:10px 12px; margin-bottom:14px; font-size:0.85rem; color:var(--ink-soft); display:flex; justify-content:space-between; align-items:center; gap:10px;">
+          <span id="edit-banner-text"></span>
+          <button type="button" onclick="cancelEdit()" data-i18n="cancel" style="background:none; border:1px solid var(--ink-soft); color:var(--ink-soft); border-radius:20px; padding:3px 10px; font-size:0.75rem; cursor:pointer; flex-shrink:0;">Cancel</button>
+        </div>
         <label data-i18n="date">Date</label>
         <input type="date" id="f-date">
         <label data-i18n="category">Category</label>
@@ -348,6 +352,20 @@
             <div class="mini-value" id="total-yearly">₹0</div>
           </button>
         </div>
+        <button type="button" id="custom-range-toggle" class="export-btn" onclick="toggleCustomRange()" data-i18n="customRangeToggle" style="margin-bottom:14px;">+ Custom date range</button>
+        <div id="custom-range-wrap" style="display:none; margin:-6px 0 14px;">
+          <div class="row2">
+            <div>
+              <label data-i18n="fromDate">From</label>
+              <input type="date" id="custom-from">
+            </div>
+            <div>
+              <label data-i18n="toDate">To</label>
+              <input type="date" id="custom-to">
+            </div>
+          </div>
+          <button type="button" class="btn-primary" onclick="applyCustomRange()" data-i18n="applyRange">Show total</button>
+        </div>
         <div class="breakdown-hint" id="breakdown-hint"></div>
 
         <h4 class="section-label" data-i18n="byCategory">By category</h4>
@@ -403,6 +421,9 @@ const TRANSLATIONS = {
     switchUser: "Logout",
     adminBadge: "Admin",
     newEntry: "New Entry", date: "Date", category: "Category", amount: "Amount (₹)",
+    edit: "Edit", updateEntry: "Update Entry",
+    editingBanner: (name) => `Editing ${name}'s entry`,
+    entryUpdated: "Entry updated.",
     note: "Note (optional)", notePlaceholder: "e.g. cement bags, auto fare",
     addNewCategory: "+ Add new category",
     newCategoryEn: "Category name (English)",
@@ -424,6 +445,9 @@ const TRANSLATIONS = {
     periodDaily: "Daily", periodFortnight: "Fortnight", periodMonthly: "Monthly", periodYearly: "Yearly",
     anchorDate: "Anchor date", byCategory: "By category", byPerson: "By person",
     filterByPerson: "Person", allPeople: "All people",
+    customRangeToggle: "+ Custom date range",
+    fromDate: "From", toDate: "To", applyRange: "Show total",
+    invalidRange: "Please pick a valid From and To date (From must be on or before To).",
     colCategory: "Category", colPerson: "Person", colAmount: "Amount",
     noEntriesPeriod: "No entries in this period",
     exportCsv: "Export this period as CSV",
@@ -449,6 +473,9 @@ const TRANSLATIONS = {
     switchUser: "வெளியேறு",
     adminBadge: "நிர்வாகி",
     newEntry: "புதிய பதிவு", date: "தேதி", category: "வகை", amount: "தொகை (₹)",
+    edit: "திருத்து", updateEntry: "பதிவைப் புதுப்பி",
+    editingBanner: (name) => `${name} இன் பதிவைத் திருத்துகிறீர்கள்`,
+    entryUpdated: "பதிவு புதுப்பிக்கப்பட்டது.",
     note: "குறிப்பு (விருப்பம்)", notePlaceholder: "எ.கா. சிமெண்ட் மூட்டைகள், ஆட்டோ கட்டணம்",
     addNewCategory: "+ புதிய வகையைச் சேர்",
     newCategoryEn: "வகையின் பெயர் (ஆங்கிலம்)",
@@ -470,6 +497,9 @@ const TRANSLATIONS = {
     periodDaily: "தினசரி", periodFortnight: "பதினைந்து நாள்", periodMonthly: "மாதம்", periodYearly: "ஆண்டு",
     anchorDate: "தேதியைத் தேர்ந்தெடு", byCategory: "வகை வாரியாக", byPerson: "நபர் வாரியாக",
     filterByPerson: "நபர்", allPeople: "அனைவரும்",
+    customRangeToggle: "+ தனிப்பயன் தேதி வரம்பு",
+    fromDate: "தொடக்கம்", toDate: "முடிவு", applyRange: "தொகையைக் காட்டு",
+    invalidRange: "சரியான தொடக்க மற்றும் முடிவு தேதியை தேர்ந்தெடுக்கவும் (தொடக்கம் முடிவுக்கு முன் இருக்க வேண்டும்).",
     colCategory: "வகை", colPerson: "நபர்", colAmount: "தொகை",
     noEntriesPeriod: "இந்தக் காலத்தில் பதிவுகள் இல்லை",
     exportCsv: "இந்த அறிக்கையை CSV ஆக ஏற்றுமதி செய்",
@@ -664,8 +694,17 @@ function startCategorySync(){
   }, () => { /* if categories collection/rules aren't set up yet, defaults still work */ });
 }
 function todayISO(){
-  const d = new Date();
-  return d.toISOString().slice(0,10);
+  return localDateStr(new Date());
+}
+function localDateStr(d){
+  // Formats using LOCAL year/month/day — never use toISOString() for this,
+  // since that converts to UTC first and silently shifts the date backward
+  // for any timezone ahead of UTC (like India, UTC+5:30), causing entries
+  // to fall outside the "today" range in reports.
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 function toggleReceiptField(){
   if(!RECEIPT_ENABLED){
@@ -749,9 +788,24 @@ async function submitExpense(){
     document.getElementById("receipt-wrap").style.display = "none";
     progressEl.style.display = "none";
     saveBtn.disabled = false;
+    if(editingEntryId){
+      editingEntryId = null;
+      document.getElementById("save-btn").textContent = t("saveEntry");
+      document.getElementById("edit-banner").style.display = "none";
+    }
   }
 
   function saveDoc(receiptUrl){
+    if(editingEntryId){
+      const updates = { date, category, amount, note };
+      if(receiptUrl) updates.receiptUrl = receiptUrl; // only overwrite if a new file was uploaded
+      expensesRef.doc(editingEntryId).update(updates).then(resetForm).catch(err => {
+        alert(t("couldNotSave") + err.message);
+        progressEl.style.display = "none";
+        saveBtn.disabled = false;
+      });
+      return;
+    }
     expensesRef.add({
       date, category, amount, note,
       person: currentPerson,
@@ -820,7 +874,7 @@ function renderEntries(){
     return;
   }
   list.innerHTML = allExpenses.slice(0, 60).map(e => {
-    const canDelete = isAdmin() || e.person === currentPerson;
+    const canEdit = isAdmin() || e.person === currentPerson;
     return `
     <div class="entry">
       <div>
@@ -830,7 +884,7 @@ function renderEntries(){
       </div>
       <div style="text-align:right;">
         <div class="amt">₹${Number(e.amount).toFixed(2)}</div>
-        ${canDelete ? `<button class="del" onclick="deleteEntry('${e.id}')">${t("delete")}</button>` : ""}
+        ${canEdit ? `<button class="del" onclick="startEditEntry('${e.id}')">${t("edit")}</button><button class="del" onclick="deleteEntry('${e.id}')">${t("delete")}</button>` : ""}
       </div>
     </div>
   `;
@@ -838,6 +892,32 @@ function renderEntries(){
 }
 function deleteEntry(id){
   if(confirm(t("confirmDelete"))) expensesRef.doc(id).delete();
+}
+
+// ---------- EDIT ENTRY ----------
+let editingEntryId = null;
+function startEditEntry(id){
+  const entry = allExpenses.find(e => e.id === id);
+  if(!entry) return;
+  editingEntryId = id;
+
+  switchTab("screen-add", document.querySelector('.tab-btn[data-screen="screen-add"]'));
+  document.getElementById("f-date").value = entry.date;
+  renderCategoryDropdown(entry.category);
+  document.getElementById("f-amount").value = entry.amount;
+  document.getElementById("f-note").value = entry.note || "";
+  toggleReceiptField();
+
+  document.getElementById("save-btn").textContent = t("updateEntry");
+  document.getElementById("edit-banner").style.display = "flex";
+  document.getElementById("edit-banner-text").textContent = t("editingBanner", entry.person);
+}
+function cancelEdit(){
+  editingEntryId = null;
+  document.getElementById("save-btn").textContent = t("saveEntry");
+  document.getElementById("edit-banner").style.display = "none";
+  populateForm();
+  toggleReceiptField();
 }
 function escapeHtml(s){
   return (s || "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -859,12 +939,35 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll("#total-grid .mini-banner").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       currentPeriod = btn.dataset.period;
+      window._customRange = null;
       renderReport();
     });
   });
   document.getElementById("report-date").addEventListener("change", renderReport);
   document.getElementById("report-person-filter").addEventListener("change", renderReport);
 });
+
+function toggleCustomRange(){
+  const wrap = document.getElementById("custom-range-wrap");
+  const opening = wrap.style.display === "none";
+  wrap.style.display = opening ? "block" : "none";
+  if(opening && !document.getElementById("custom-from").value){
+    document.getElementById("custom-from").value = todayISO();
+    document.getElementById("custom-to").value = todayISO();
+  }
+}
+function applyCustomRange(){
+  const from = document.getElementById("custom-from").value;
+  const to = document.getElementById("custom-to").value;
+  if(!from || !to || from > to){
+    alert(t("invalidRange"));
+    return;
+  }
+  window._customRange = { from, to };
+  currentPeriod = "custom";
+  document.querySelectorAll("#total-grid .mini-banner").forEach(b => b.classList.remove("active"));
+  renderReport();
+}
 
 function getRange(period, anchorISO){
   const anchor = new Date(anchorISO + "T00:00:00");
@@ -915,29 +1018,42 @@ function renderReport(){
   const personFilter = document.getElementById("report-person-filter").value || "all";
   const baseExpenses = personFilter === "all" ? allExpenses : allExpenses.filter(e => e.person === personFilter);
   const periods = ["daily", "fortnightly", "monthly", "yearly"];
-  let activeLabel = "";
 
+  // Always update all four grid totals, regardless of which one (or custom
+  // range) is currently selected for the breakdown below.
   periods.forEach(p => {
-    const { start, end, label } = getRange(p, anchorISO);
+    const { start, end } = getRange(p, anchorISO);
     const startStr = isoOf(start), endStr = isoOf(end);
     const rows = baseExpenses.filter(e => e.date >= startStr && e.date <= endStr);
     const total = rows.reduce((s,e) => s + Number(e.amount), 0);
-
     document.getElementById("total-" + p).textContent = "₹" + total.toFixed(2);
     document.getElementById("range-" + p).textContent = shortRangeLabel(p, start, end);
-
-    if(p === currentPeriod){
-      activeLabel = label + (personFilter !== "all" ? ` · ${personFilter}` : "");
-      renderBreakdown("cat-breakdown", rows, "category");
-      renderBreakdown("person-breakdown", rows, "person");
-      window._lastReportRows = rows; // for CSV export
-      window._lastReportLabel = activeLabel;
-    }
   });
 
+  // Compute the rows/label for whichever selection (a period, or a custom
+  // range) currently drives the breakdown tables and CSV export.
+  let rows, label;
+  if(currentPeriod === "custom" && window._customRange){
+    const { from, to } = window._customRange;
+    rows = baseExpenses.filter(e => e.date >= from && e.date <= to);
+    const locale = currentLang === "ta" ? "ta-IN" : "en-IN";
+    const opts = { day: "numeric", month: "short", year: "numeric" };
+    label = `${new Date(from+"T00:00:00").toLocaleDateString(locale, opts)} – ${new Date(to+"T00:00:00").toLocaleDateString(locale, opts)}`;
+  } else {
+    const r = getRange(currentPeriod, anchorISO);
+    const startStr = isoOf(r.start), endStr = isoOf(r.end);
+    rows = baseExpenses.filter(e => e.date >= startStr && e.date <= endStr);
+    label = r.label;
+  }
+
+  const activeLabel = label + (personFilter !== "all" ? ` · ${personFilter}` : "");
+  renderBreakdown("cat-breakdown", rows, "category");
+  renderBreakdown("person-breakdown", rows, "person");
+  window._lastReportRows = rows; // for CSV export
+  window._lastReportLabel = activeLabel;
   document.getElementById("breakdown-hint").textContent = activeLabel;
 }
-function isoOf(d){ return d.toISOString().slice(0,10); }
+function isoOf(d){ return localDateStr(d); }
 
 function renderBreakdown(tableId, rows, key){
   const totals = {};

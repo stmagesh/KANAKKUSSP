@@ -100,9 +100,13 @@ a URL like `https://yourname.github.io/kanakku`.
 - Entries with a receipt (once enabled) show a **📎 View receipt** link that
   opens the image/PDF.
 - **Entries** tab — live list of everyone's entries, newest first. Regular
-  users can delete only entries they personally logged. Anyone listed in
-  `ADMIN_USERS` (in `firebase-config.js`) sees a **Delete** button on *every*
-  entry, and gets an **Admin** badge next to their name in the header.
+  users can edit or delete only entries they personally logged. Anyone listed
+  in `ADMIN_USERS` (in `firebase-config.js`) sees **Edit** and **Delete** on
+  *every* entry, and gets an **Admin** badge next to their name in the header.
+  Editing reuses the Add screen — pick Edit, the form fills in with that
+  entry's details, change what's needed, and save (or hit Cancel in the
+  banner that appears to back out without changing anything). Editing never
+  changes who the entry is attributed to or when it was originally created.
 - **Logout** (top-right, once logged in) — asks for confirmation, then
   fully logs out: clears the cached app data and reloads the page, so the
   next person always lands on a clean login screen and the Add tab — never
@@ -120,7 +124,9 @@ a URL like `https://yourname.github.io/kanakku`.
   see everyone combined again. Tap any of the four totals to see its category
   and person breakdown below, and export that period as a CSV (opens fine in
   Excel) — the exported file ends with a **TOTAL** row summing the Amount
-  column.
+  column. **"+ Custom date range"** below the grid lets you pick any From/To
+  dates instead of a fixed period — tap **Show total** and the breakdown and
+  CSV switch to that exact range.
 
 ## Enabling receipt uploads later
 1. In Firebase Console → Storage, click **Upgrade project** and link a
@@ -146,6 +152,10 @@ a URL like `https://yourname.github.io/kanakku`.
    PDFs upload as-is; keep them under ~8MB.
 
 ## Notes
+- **Fixed: Daily report showing ₹0.** A date-handling bug was converting
+  report date ranges through UTC time, which silently shifted them back a day
+  for India's timezone (UTC+5:30) — so "today" in the report didn't match
+  today's entries. This is now fixed; all reports use local dates throughout.
 - **Visual polish pass** — cards now have soft layered shadows instead of flat
   borders, buttons and inputs have proper hover/press feedback and focus
   rings, tab bar icons are clean line-icons instead of plain text characters,
